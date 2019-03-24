@@ -1,6 +1,7 @@
 module ReserveResource.Logic
 
 open System
+open System
 open ReserveResource.Rop
 open ReserveResource.Domain
 open ReserveResource.HardCode
@@ -37,17 +38,40 @@ let getReservingResourceReserveStates(user:Employee) =
      |> Seq.toArray
      |> succeed
 
-let createReserve(user) =
+let createAddingReserve(employee) =
     succeed {
-        Employee = user;
+        Employee = employee;
         ReservingResource = gCloudVm;
-        From = DateTime.Now;
         ExpiredIn = now.AddDays(float 1);
-        Status = ReservingStatus.Active
-    }    
+        ReservingPeriod = ReservingPeriod.For2Hours
+    }
 
-let addReserve(addingReserve) =
+let getHoursFromReservingPeriod reservingPeriod =
+    match reservingPeriod with
+        | For2Hours _ -> float 2
+        | For6Hours _ -> float 6
+        | ForDay _ -> float 24
+        | For3Days _ -> float (24*3)
+
+let mapToReserve(addingReserve: AddingReserve) =
+    {
+        Employee = addingReserve.Employee
+        ReservingResource = addingReserve.ReservingResource
+        From = DateTime.Now
+        Status = ReservingStatus.Active
+        ExpiredIn = addingReserve.ReservingPeriod |> getHoursFromReservingPeriod |> DateTime.Now.AddHours 
+    }
+
+let addReserveToDb reserve =
     let tmp = db.Reserves;
-    db <- {db with Reserves = tmp @ [addingReserve]}
-    let event = DomainEvents.ReserveAdded addingReserve
-    succeedWithMsg () event
+    db <- {db with Reserves = tmp @ [reserve]}
+
+let tryAddReserve(addingReserve: AddingReserve) =
+    let state = toReservingResourceReserveStates addingReserve.ReservingResource
+    match state with
+        | Busy b -> let state = DomainEvents.ReservingResourceAlreadyBusy b
+                    fail state
+        | Free f -> let reserve = mapToReserve addingReserve
+                    addReserveToDb reserve
+                    let event = DomainEvents.ReserveAdded reserve
+                    succeedWithMsg () event

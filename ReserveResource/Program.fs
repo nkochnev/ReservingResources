@@ -3,7 +3,7 @@
 open System
 open ReserveResource.Rop
 open ReserveResource.Domain
-open ReserveResource.HardCode
+open ReserveResource.DomainToString
 open ReserveResource.Logic
 
 open Funogram.Bot
@@ -14,27 +14,7 @@ let mutable botToken = "792685377:AAEO3gKuxY_y9qKybJJhSdwsk4TMjb8jcSk"
 
 [<EntryPoint>]
 let main argv =   
-
-    let stringArrayToString collection =
-            collection |> String.concat Environment.NewLine
-    
-    let reservingResourceToString(rr: ReservingResource) = 
-            match rr with
-                    | VM vm-> "(vm) " + vm.Name
-                    | Organization org -> "(org) " + org.Name
-                    | Site s -> "(site) " + s.Name
-    
-    let reservingResourcesToString(reservingResources: ReservingResource[]) =
-            reservingResources |> Seq.map reservingResourceToString |> stringArrayToString |> succeed
-        
-    let reservingResourceStateToString(rrs: ReservingResourceReserveState) = 
-            match rrs with
-                    | Free f -> reservingResourceToString(f) + " free"
-                    | Busy b -> reservingResourceToString(b.ReservingResource) + " reserved by @" + b.ReservingByEmployee.TelegramLogin + " since from " + b.StartReserveDate.ToString()
-    
-    let reservingResourceStatesToString(rrs: ReservingResourceReserveState[]) =
-            rrs |> Seq.map reservingResourceStateToString |> stringArrayToString  |> succeed      
-        
+       
     let processMessageBuild config =
         
         let defaultText = """⭐️Available commands:
@@ -94,8 +74,8 @@ let main argv =
                           |> printStringResult
             
             let onReserve() =  tryGetUserFromContext
-                              |> bindR createReserve
-                              |> bindR addReserve
+                              |> bindR createAddingReserve
+                              |> bindR tryAddReserve
                               |> printUnitResult
             
             let result =

@@ -1,5 +1,6 @@
 module ReserveResource.Domain
 open System
+open ReserveResource.Rop
 
 type Team = {
     Id: Guid
@@ -41,7 +42,20 @@ type ReservingResource =
     | VM of VirtualMachine
     | Organization of Organization
     | Site of Site
-    
+
+type ReservingPeriod =
+    | For2Hours
+    | For6Hours
+    | ForDay
+    | For3Days
+
+type AddingReserve = {
+    Employee: Employee
+    ReservingResource: ReservingResource
+    ExpiredIn: DateTime
+    ReservingPeriod: ReservingPeriod
+}
+
 type Reserve = {
     Employee: Employee
     ReservingResource: ReservingResource
@@ -71,11 +85,6 @@ type DomainEvents =
     //errors
     | UserNotFoundByTelegramAccount
     | TelegramAccountIsEmpty
+    | ReservingResourceAlreadyBusy of BusyReservingResourceReserveState
     //events
     | ReserveAdded of Reserve
-    
-let getMessageFromDomainEvent event =
-    match event with
-    | UserNotFoundByTelegramAccount _ -> "Пользователь не зарегистрирован"
-    | TelegramAccountIsEmpty _ -> "У пользователя нет имени пользователя"
-    | ReserveAdded r -> "Бронирование для " + r.Employee.Name + " добавлено"
