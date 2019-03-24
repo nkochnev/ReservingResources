@@ -6,7 +6,7 @@ type Team = {
     Name: string
 }
 
-type User = {
+type Employee = {
     Id: Guid
     Name: string
     TelegramLogin: string
@@ -43,7 +43,7 @@ type ReservingResource =
     | Site of Site
     
 type Reserve = {
-    User: User
+    Employee: Employee
     ReservingResource: ReservingResource
     From: DateTime
     ExpiredIn: DateTime
@@ -58,7 +58,7 @@ type FreeReservingResourceReserveState = ReservingResource
 
 type BusyReservingResourceReserveState = {
     ReservingResource: ReservingResource
-    ReservingByUser: User
+    ReservingByEmployee: Employee
     StartReserveDate: DateTime
     ReservingForDate: DateTime
 }
@@ -66,3 +66,16 @@ type BusyReservingResourceReserveState = {
 type ReservingResourceReserveState =
     | Free of FreeReservingResourceReserveState
     | Busy of BusyReservingResourceReserveState
+    
+type DomainEvents =
+    //errors
+    | UserNotFoundByTelegramAccount
+    | TelegramAccountIsEmpty
+    //events
+    | ReserveAdded of Reserve
+    
+let getMessageFromDomainEvent event =
+    match event with
+    | UserNotFoundByTelegramAccount _ -> "Пользователь не зарегистрирован"
+    | TelegramAccountIsEmpty _ -> "У пользователя нет имени пользователя"
+    | ReserveAdded r -> "Бронирование для " + r.Employee.Name + " добавлено"

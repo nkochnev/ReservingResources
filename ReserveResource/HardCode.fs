@@ -8,9 +8,9 @@ let now = DateTime.Now;
 let gCloudTeam = {Id = Guid.NewGuid();Name = "GCloud";}
 let hotelTeam = {Id = Guid.NewGuid();Name = "Hotel";}
 
-let teamLeadUser = {Id = Guid.NewGuid(); Name = "TeamLead";TelegramLogin="@teamlead";InTeams = [gCloudTeam; hotelTeam] } 
-let middleUser = {Id = Guid.NewGuid(); Name = "Middle";TelegramLogin="@middle";InTeams = [gCloudTeam] }
-let juniorUser = {Id = Guid.NewGuid(); Name = "Junior";TelegramLogin="@junior";InTeams = [hotelTeam] }
+let teamLeadUser = {Id = Guid.NewGuid(); Name = "TeamLead";TelegramLogin="nkochnev";InTeams = [gCloudTeam; hotelTeam] } 
+let middleUser = {Id = Guid.NewGuid(); Name = "Middle";TelegramLogin="middle";InTeams = [gCloudTeam] }
+let juniorUser = {Id = Guid.NewGuid(); Name = "Junior";TelegramLogin="junior";InTeams = [hotelTeam] }
 
 let users() = [teamLeadUser;middleUser;juniorUser]
 
@@ -25,7 +25,7 @@ let holyHotelersOrganization = Organization {Id = Guid.NewGuid();Name = "Свя�
 let reservingResources() =  [gCloud7777; gCloud8888; gCloud9999; gCloudVm; hotelVm; holyHotelersOrganization]
 
 let gCloud7777ExpiredReserve = {
-    User = teamLeadUser;
+    Employee = teamLeadUser;
     ReservingResource = gCloud7777;
     From = now.AddDays(float -10);
     ExpiredIn = now.AddDays(float -1);
@@ -33,7 +33,7 @@ let gCloud7777ExpiredReserve = {
 }
 
 let gCloud7777ActiveReserve = {
-    User = teamLeadUser;
+    Employee = teamLeadUser;
     ReservingResource = gCloud7777;
     From = now.AddHours(float -10);
     ExpiredIn = now.AddDays(float 1);
@@ -41,12 +41,9 @@ let gCloud7777ActiveReserve = {
 }
 
 let gCloud9999ActiveReserve = {
-    User = middleUser;
+    Employee = middleUser;
     ReservingResource = gCloud9999;
     From = now.AddMinutes(float -1);
     ExpiredIn = now.AddDays(float 7);
     Status = ReservingStatus.Active
 }
-
-let dbContext =
-    {Reserves = [gCloud7777ExpiredReserve; gCloud7777ActiveReserve; gCloud9999ActiveReserve]}

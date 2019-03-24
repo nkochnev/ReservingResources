@@ -6,14 +6,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Domain.fs" />
+		<Compile Include="Rop.fs" />
+		<Compile Include="Domain.fs" />
         <Compile Include="HardCode.fs" />
         <Compile Include="Logic.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="Info.txt" />
+      <PackageReference Include="Funogram" Version="1.3.0" />
     </ItemGroup>
 
 </Project>

@@ -1,43 +1,119 @@
-﻿open System
+﻿module ReserveResource.Bot
+
+open System
+open ReserveResource.Rop
 open ReserveResource.Domain
 open ReserveResource.HardCode
 open ReserveResource.Logic
 
+open Funogram.Bot
+open Funogram.Api
+open Funogram.Types
+
+let mutable botToken = "792685377:AAEO3gKuxY_y9qKybJJhSdwsk4TMjb8jcSk"
+
 [<EntryPoint>]
 let main argv =   
+
+    let stringArrayToString collection =
+            collection |> String.concat Environment.NewLine
     
-//    let gCloudVmActiveReserve = {
-//        User = juniorUser;
-//        ReservingResource = gCloudVm;
-//        From = now.AddMinutes(float -10);
-//        ExpiredIn = now.AddDays(float 1);
-//        Status = ReservingStatus.Active
-//    }
-//
-//    let reserves = dbContext.Reserves;
-//    let dbContext = {dbContext with Reserves = reserves @ [gCloudVmActiveReserve]}        
+    let reservingResourceToString(rr: ReservingResource) = 
+            match rr with
+                    | VM vm-> "(vm) " + vm.Name
+                    | Organization org -> "(org) " + org.Name
+                    | Site s -> "(site) " + s.Name
     
-    let currentUser = teamLeadUser
-    
-    let showReservingResource(rr: ReservingResource) = 
-        match rr with
-                | VM vm-> "(vm) " + vm.Name
-                | Organization org -> "(org) " + org.Name
-                | Site s -> "(site) " + s.Name
-    
-    let showReservingResourceState(rrs: ReservingResourceReserveState) = 
-        match rrs with
-                | Free f -> showReservingResource(f) + " free"
-                | Busy b -> showReservingResource(b.ReservingResource) + " reserved by " + b.ReservingByUser.TelegramLogin + " since from " + b.StartReserveDate.ToString()
+    let reservingResourcesToString(reservingResources: ReservingResource[]) =
+            reservingResources |> Seq.map reservingResourceToString |> stringArrayToString |> succeed
         
-    let str = getReservingResourceReserveStates(currentUser)
-            |> Seq.map showReservingResourceState
-            |> String.concat Environment.NewLine
-    printfn "%A" str
+    let reservingResourceStateToString(rrs: ReservingResourceReserveState) = 
+            match rrs with
+                    | Free f -> reservingResourceToString(f) + " free"
+                    | Busy b -> reservingResourceToString(b.ReservingResource) + " reserved by @" + b.ReservingByEmployee.TelegramLogin + " since from " + b.StartReserveDate.ToString()
     
-//    Console.Write("enter command: ")
-//    let s = Console.ReadLine()
+    let reservingResourceStatesToString(rrs: ReservingResourceReserveState[]) =
+            rrs |> Seq.map reservingResourceStateToString |> stringArrayToString  |> succeed      
+        
+    let processMessageBuild config =
+        
+        let defaultText = """⭐️Available commands:
+        /get -     get reserving resource states
+        /reserve - add reserve
+        /release - release
+        """
     
-//    printfn "%A" s
+        let processResultWithValue (result: Result<'a, ApiResponseError>) =
+            match result with
+            | Ok v -> Some v
+            | Error e ->
+                printfn "Error: %s" e.Description
+                None
+    
+        let processResult (result: Result<'a, ApiResponseError>) =
+            processResultWithValue result |> ignore
+    
+        let botResult data = api config data |> Async.RunSynchronously
+        let bot data = botResult data |> processResult
+        
+        let updateArrived ctx = 
+            let fromId() = ctx.Update.Message.Value.From.Value.Id            
+            let sendMessageFormatted text parseMode = (sendMessageBase (ChatId.Int(fromId())) text (Some parseMode) None None None None) |> bot
+            
+            let printString str =
+                sendMessageFormatted str ParseMode.Markdown
+                        
+            let printDomainEvents evnts =
+                evnts |> Seq.map getMessageFromDomainEvent |> Seq.iter printString
+                        
+            let printDomainEvent evnt =
+                evnt |> getMessageFromDomainEvent |> printString
+            
+            let printStringWithEvents(str, evnts) =
+                printString str
+                printDomainEvents evnts
+                        
+            let printStringResult(result: RopResult<string, DomainEvents>) =
+                either printStringWithEvents printDomainEvents result
+            
+            let printUnitResult(result: RopResult<unit, DomainEvents>) = 
+                either (fun (a, b) -> printDomainEvents b) printDomainEvents result
+            
+            let tryGetUserFromContext =
+                match ctx.Update.Message.Value.From.Value.Username with
+                    | Some username ->
+                        let user = getUsers() |> Seq.tryFind (fun u -> u.TelegramLogin = username)
+                        match user with
+                            | Some u -> succeed u
+                            | None _ -> fail DomainEvents.UserNotFoundByTelegramAccount
+                    | None _ -> fail DomainEvents.TelegramAccountIsEmpty
+                                        
+            let onGet() = tryGetUserFromContext
+                          |> bindR getReservingResourceReserveStates
+                          |> bindR reservingResourceStatesToString                         
+                          |> printStringResult
+            
+            let onReserve() =  tryGetUserFromContext
+                              |> bindR createReserve
+                              |> bindR addReserve
+                              |> printUnitResult
+            
+            let result =
+                processCommands ctx [
+                    cmd "/get" (fun _ ->  onGet())
+                    cmd "/reserve" (fun _ ->  onReserve())
+//                    cmd "/release" onRelease
+                ]
+    
+            if result then bot (sendMessage (fromId()) defaultText)
+            else ()
+        updateArrived
+    
+    let start token =
+        let config = { defaultConfig with Token = token }
+        let updateArrived = processMessageBuild config
+        startBot config updateArrived None    
+    
+    start botToken |> Async.RunSynchronously   
     
     0 // return an integer exit code
