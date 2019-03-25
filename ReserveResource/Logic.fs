@@ -28,16 +28,29 @@ let reservingResourceInTeam(reservingResource: ReservingResource, user: Employee
 let toReservingResourceReserveStates(reservingResource: ReservingResource) =
     let lastActiveReserve = getReserves() |> Seq.tryFind (fun r -> r.ReservingResource = reservingResource && r.Status = ReservingStatus.Active)
     match lastActiveReserve with
-        | Some r -> Busy {ReservingResource = reservingResource; ReservingByEmployee = r.Employee; StartReserveDate = r.From; ReservingForDate = r.ExpiredIn }
+        | Some r -> Busy r
         | None _ -> Free reservingResource
 
-let getReservingResourceReserveStates(user:Employee) =
-     reservingResources()
-     |> Seq.filter (fun r -> reservingResourceInTeam(r, user))
-     |> Seq.map (fun r -> toReservingResourceReserveStates(r))
-     |> Seq.toArray
-     |> succeed
+let getReservingResourceReserves(employee:Employee) = 
+    reservingResources() |> Seq.filter (fun r -> reservingResourceInTeam(r, employee)) |> succeed
+    
+let mapReservingResourceReserveStates rrr =
+    rrr |> Seq.map (fun r -> toReservingResourceReserveStates(r)) |> succeed
+    
+let getReservingResourceReserveStates(employee:Employee) =
+    getReservingResourceReserves(employee) |> bindR mapReservingResourceReserveStates
 
+let isFreeReservingResourceReserveState rrs =
+    match rrs with
+        | Free f -> Some f
+        | Busy _ -> None
+
+let filterOnlyFreeReservingResourceReserveState a =
+    a |> Seq.choose isFreeReservingResourceReserveState |> succeed
+
+let getFreeReservingResourceReserveStates(employee: Employee) =
+    employee |> getReservingResourceReserveStates |> bindR filterOnlyFreeReservingResourceReserveState
+    
 let createAddingReserve(employee) =
     succeed {
         Employee = employee;
@@ -52,6 +65,9 @@ let getHoursFromReservingPeriod reservingPeriod =
         | For6Hours _ -> float 6
         | ForDay _ -> float 24
         | For3Days _ -> float (24*3)
+
+let allPeriods =
+    [ReservingPeriod.For2Hours; ReservingPeriod.For6Hours; ReservingPeriod.ForDay; ReservingPeriod.For3Days]
 
 let mapToReserve(addingReserve: AddingReserve) =
     {
@@ -75,3 +91,4 @@ let tryAddReserve(addingReserve: AddingReserve) =
                     addReserveToDb reserve
                     let event = DomainEvents.ReserveAdded reserve
                     succeedWithMsg () event
+                    

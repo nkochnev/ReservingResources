@@ -20,7 +20,6 @@ let main argv =
         let defaultText = """⭐️Available commands:
         /get -     get reserving resource states
         /reserve - add reserve
-        /release - release
         """
     
         let processResultWithValue (result: Result<'a, ApiResponseError>) =
@@ -67,16 +66,40 @@ let main argv =
                             | Some u -> succeed u
                             | None _ -> fail DomainEvents.UserNotFoundByTelegramAccount
                     | None _ -> fail DomainEvents.TelegramAccountIsEmpty
-                                        
+            
+            let toFreeResourceReserveStateButton(rss: FreeResourceReserveState) =
+                [{
+                  Text = reservingResourceToString rss
+                  CallbackData = Some ((reservingResourceToId rss).ToString())
+                  Url = None
+                  CallbackGame = None
+                  SwitchInlineQuery = None
+                  SwitchInlineQueryCurrentChat = None
+                }] |> List.toSeq           
+            
+            let toFreeResourceReserveStateButtons(rss: seq<FreeResourceReserveState>) =
+                rss |> Seq.map toFreeResourceReserveStateButton |> succeed
+                        
+            let makeMarkup keyboard =
+                       succeed (Markup.InlineKeyboardMarkup {InlineKeyboard = keyboard})
+            
             let onGet() = tryGetUserFromContext
                           |> bindR getReservingResourceReserveStates
                           |> bindR reservingResourceStatesToString                         
                           |> printStringResult
             
-            let onReserve() =  tryGetUserFromContext
-                              |> bindR createAddingReserve
-                              |> bindR tryAddReserve
-                              |> printUnitResult
+            let onReserve() =
+                            let markup = tryGetUserFromContext
+                                            |> bindR getFreeReservingResourceReserveStates
+                                            |> bindR toFreeResourceReserveStateButtons
+                                            |> bindR makeMarkup
+                            let mes = "Сейчас для бронирования доступные следующие ресурсы"
+                            either (fun (a, b)-> (bot (sendMessageMarkup (fromId()) mes a))) (fun c -> (printDomainEvents c)) markup
+                                    
+//            let onTestReserve() =  tryGetUserFromContext
+//                                |> bindR createAddingReserve
+//                                |> bindR tryAddReserve
+//                                |> printUnitResult
             
             let result =
                 processCommands ctx [

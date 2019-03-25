@@ -68,23 +68,22 @@ type DbContext = {
     mutable Reserves: Reserve list;
 }
 
-type FreeReservingResourceReserveState = ReservingResource
+type FreeResourceReserveState = ReservingResource
+type BusyResourceReserveState = Reserve
 
-type BusyReservingResourceReserveState = {
-    ReservingResource: ReservingResource
-    ReservingByEmployee: Employee
-    StartReserveDate: DateTime
-    ReservingForDate: DateTime
-}
-
-type ReservingResourceReserveState =
-    | Free of FreeReservingResourceReserveState
-    | Busy of BusyReservingResourceReserveState
+type ResourceReserveState =
+    | Free of FreeResourceReserveState
+    | Busy of BusyResourceReserveState
     
 type DomainEvents =
     //errors
     | UserNotFoundByTelegramAccount
     | TelegramAccountIsEmpty
-    | ReservingResourceAlreadyBusy of BusyReservingResourceReserveState
+    | ReservingResourceAlreadyBusy of BusyResourceReserveState
     //events
     | ReserveAdded of Reserve
+
+type ReserveResourceCallbackData = {
+    ResourceId: Guid
+    ForHours: float
+}

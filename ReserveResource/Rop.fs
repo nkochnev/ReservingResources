@@ -46,3 +46,21 @@ let bindR f result =
         Failure errs 
     either fSuccess fFailure result
    
+
+/// given an RopResult, call a unit function on the success branch
+/// and pass thru the result
+let successTee f result = 
+    let fSuccess (x,msgs) = 
+        f (x,msgs)
+        Success (x,msgs) 
+    let fFailure errs = Failure errs 
+    either fSuccess fFailure result
+
+/// given an RopResult, call a unit function on the failure branch
+/// and pass thru the result
+let failureTee f result = 
+    let fSuccess (x,msgs) = Success (x,msgs) 
+    let fFailure errs = 
+        f errs
+        Failure errs 
+    either fSuccess fFailure result

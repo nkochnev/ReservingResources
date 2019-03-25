@@ -13,16 +13,37 @@ let reservingResourceToString(rr: ReservingResource) =
                 | Organization org -> "(org) " + org.Name
                 | Site s -> "(site) " + s.Name
 
+let reservingResourceToName(rr: ReservingResource) = 
+        match rr with
+                | VM vm-> vm.Name
+                | Organization org -> org.Name
+                | Site s -> s.Name
+
+let reservingResourceToId(rr: ReservingResource) = 
+        match rr with
+                | VM vm-> vm.Id
+                | Organization org -> org.Id
+                | Site s -> s.Id
+
 let reservingResourcesToString(reservingResources: ReservingResource[]) =
         reservingResources |> Seq.map reservingResourceToString |> stringArrayToString |> succeed
     
-let reservingResourceStateToString(rrs: ReservingResourceReserveState) = 
+let reservingResourceStateToString(rrs: ResourceReserveState) = 
         match rrs with
-                | Free f -> reservingResourceToString(f) + " free"
-                | Busy b -> reservingResourceToString(b.ReservingResource) + " reserved by @" + b.ReservingByEmployee.TelegramLogin + " since from " + b.StartReserveDate.ToString()
+                | Free f -> reservingResourceToString f + " free"
+                | Busy b -> reservingResourceToString(b.ReservingResource) + " reserved by @" + b.Employee.TelegramLogin
+                            + " since from " + b.From.ToString()
+                            + " for " + b.ExpiredIn.ToString()
 
-let reservingResourceStatesToString(rrs: ReservingResourceReserveState[]) =
+let reservingResourceStatesToString(rrs: seq<ResourceReserveState>) =
         rrs |> Seq.map reservingResourceStateToString |> stringArrayToString  |> succeed      
+
+let reservingPeriodToString p =
+        match p with
+         | ReservingPeriod.For2Hours _ -> "2 часа"
+         | ReservingPeriod.For6Hours _ -> "6 часов"
+         | ReservingPeriod.ForDay _ -> "1 день"
+         | ReservingPeriod.For3Days _ -> "3 дня"
 
 let getMessageFromDomainEvent event =
     match event with
