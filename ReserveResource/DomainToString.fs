@@ -7,8 +7,8 @@ open ReserveResource.Domain
 let stringArrayToString collection =
             collection |> String.concat Environment.NewLine
     
-let reservingResourceToString(rr: ReservingResource) = 
-        match rr with
+let reservingResourceToString = 
+        function
                 | VM vm-> "(vm) " + vm.Name
                 | Organization org -> "(org) " + org.Name
                 | Site s -> "(site) " + s.Name
@@ -19,8 +19,8 @@ let reservingResourceToName(rr: ReservingResource) =
                 | Organization org -> org.Name
                 | Site s -> s.Name
 
-let reservingResourceToId(rr: ReservingResource) = 
-        match rr with
+let reservingResourceToId = 
+        function
                 | VM vm-> vm.Id
                 | Organization org -> org.Id
                 | Site s -> s.Id
@@ -28,8 +28,8 @@ let reservingResourceToId(rr: ReservingResource) =
 let reservingResourcesToString(reservingResources: ReservingResource[]) =
         reservingResources |> Seq.map reservingResourceToString |> stringArrayToString |> succeed
     
-let reservingResourceStateToString(rrs: ResourceReserveState) = 
-        match rrs with
+let reservingResourceStateToString = 
+        function
                 | Free f -> reservingResourceToString f + " free"
                 | Busy b -> reservingResourceToString(b.ReservingResource) + " reserved by @" + b.Employee.TelegramLogin
                             + " since from " + b.From.ToString()
@@ -38,15 +38,15 @@ let reservingResourceStateToString(rrs: ResourceReserveState) =
 let reservingResourceStatesToString(rrs: seq<ResourceReserveState>) =
         rrs |> Seq.map reservingResourceStateToString |> stringArrayToString  |> succeed      
 
-let reservingPeriodToString p =
-        match p with
+let reservingPeriodToString =
+        function
          | ReservingPeriod.For2Hours _ -> "2 часа"
          | ReservingPeriod.For6Hours _ -> "6 часов"
          | ReservingPeriod.ForDay _ -> "1 день"
          | ReservingPeriod.For3Days _ -> "3 дня"
 
-let getMessageFromDomainEvent event =
-    match event with
+let getMessageFromDomainEvent =
+    function
     | UserNotFoundByTelegramAccount _ -> "Пользователь не зарегистрирован"
     | TelegramAccountIsEmpty _ -> "У пользователя нет имени пользователя"
     | ReserveAdded r -> "Бронирование для " + reservingResourceToString r.ReservingResource + " добавлено"

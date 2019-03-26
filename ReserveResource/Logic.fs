@@ -40,8 +40,8 @@ let mapReservingResourceReserveStates rrr =
 let getReservingResourceReserveStates(employee:Employee) =
     getReservingResourceReserves(employee) |> bindR mapReservingResourceReserveStates
 
-let isFreeReservingResourceReserveState rrs =
-    match rrs with
+let isFreeReservingResourceReserveState =
+    function
         | Free f -> Some f
         | Busy _ -> None
 
@@ -59,8 +59,8 @@ let createAddingReserve(employee) =
         ReservingPeriod = ReservingPeriod.For2Hours
     }
 
-let getHoursFromReservingPeriod reservingPeriod =
-    match reservingPeriod with
+let getHoursFromReservingPeriod =
+    function
         | For2Hours _ -> float 2
         | For6Hours _ -> float 6
         | ForDay _ -> float 24
@@ -84,7 +84,7 @@ let addReserveToDb reserve =
 
 let tryAddReserve(addingReserve: AddingReserve) =
     let state = toReservingResourceReserveStates addingReserve.ReservingResource
-    match state with
+    function
         | Busy b -> let state = DomainEvents.ReservingResourceAlreadyBusy b
                     fail state
         | Free f -> let reserve = mapToReserve addingReserve
