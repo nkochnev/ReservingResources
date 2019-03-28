@@ -1,10 +1,11 @@
-﻿module ReserveResource.Bot
+﻿module ReserveResource.TelegramBot
 
 open System
 open ReserveResource.Rop
-open ReserveResource.Domain
+open ReserveResource.Types
 open ReserveResource.DomainToString
 open ReserveResource.Logic
+open ReserveResource.TelegramBotInfrastructure
 
 open Funogram.Bot
 open Funogram.Api
@@ -43,29 +44,29 @@ let main argv =
                 sendMessageFormatted str ParseMode.Markdown
                         
             let printDomainEvents evnts =
-                evnts |> Seq.map getMessageFromDomainEvent |> Seq.iter printString
+                evnts |> Seq.map telegramBotEventsToString |> Seq.iter printString
                         
             let printDomainEvent evnt =
-                evnt |> getMessageFromDomainEvent |> printString
+                evnt |> telegramBotEventsToString |> printString
             
             let printStringWithEvents(str, evnts) =
                 printString str
                 printDomainEvents evnts
                         
-            let printStringResult(result: RopResult<string, DomainEvents>) =
+            let printStringResult(result: RopResult<string, TelegramBotEvents>) =
                 either printStringWithEvents printDomainEvents result
             
-            let printUnitResult(result: RopResult<unit, DomainEvents>) = 
+            let printUnitResult(result: RopResult<unit, TelegramBotEvents>) = 
                 either (fun (a, b) -> printDomainEvents b) printDomainEvents result
             
-            let tryGetUserFromContext =
+            let tryGetAccountFromContext : RopResult<Account, TelegramBotEvents> =
                 match ctx.Update.Message.Value.From.Value.Username with
                     | Some username ->
-                        let user = getUsers() |> Seq.tryFind (fun u -> u.TelegramLogin = username)
-                        match user with
+                        let account = getAccounts() |> Seq.tryFind (fun u -> u.TelegramLogin = username)
+                        match account with
                             | Some u -> succeed u
-                            | None _ -> fail DomainEvents.UserNotFoundByTelegramAccount
-                    | None _ -> fail DomainEvents.TelegramAccountIsEmpty
+                            | None _ -> fail (DomainEvent DomainEvents.AccountNotFoundByTelegramUser)
+                    | None _ -> fail (TelegramEvent TelegramEvents.TelegramAccountIsEmpty)
             
             let toFreeResourceReserveStateButton(rss: FreeResourceReserveState) =
                 [{
@@ -83,29 +84,23 @@ let main argv =
             let makeMarkup keyboard =
                        succeed (Markup.InlineKeyboardMarkup {InlineKeyboard = keyboard})
             
-            let onGet() = tryGetUserFromContext
+            let onGet() = tryGetAccountFromContext
                           |> bindR getReservingResourceReserveStates
                           |> bindR reservingResourceStatesToString                         
                           |> printStringResult
             
             let onReserve() =
-                            let markup = tryGetUserFromContext
+                            let markup = tryGetAccountFromContext
                                             |> bindR getFreeReservingResourceReserveStates
                                             |> bindR toFreeResourceReserveStateButtons
                                             |> bindR makeMarkup
                             let mes = "Сейчас для бронирования доступные следующие ресурсы"
                             either (fun (a, b)-> (bot (sendMessageMarkup (fromId()) mes a))) (fun c -> (printDomainEvents c)) markup
                                     
-//            let onTestReserve() =  tryGetUserFromContext
-//                                |> bindR createAddingReserve
-//                                |> bindR tryAddReserve
-//                                |> printUnitResult
-            
             let result =
                 processCommands ctx [
                     cmd "/get" (fun _ ->  onGet())
                     cmd "/reserve" (fun _ ->  onReserve())
-//                    cmd "/release" onRelease
                 ]
     
             if result then bot (sendMessage (fromId()) defaultText)

@@ -1,14 +1,13 @@
 module ReserveResource.Logic
 
 open System
-open System
 open ReserveResource.Rop
-open ReserveResource.Domain
+open ReserveResource.Types
 open ReserveResource.HardCode
 
 let mutable db = {Reserves = [gCloud7777ExpiredReserve; gCloud7777ActiveReserve; gCloud9999ActiveReserve]}
 
-let getUsers() = [teamLeadUser;middleUser;juniorUser]
+let getAccounts() = [teamLeadAccount;middleAccount;juniorAccount]
 
 let getTeams() = [gCloudTeam]
 
@@ -17,13 +16,13 @@ let getReserves() = db.Reserves
 let getActiveReserves() =
     getReserves() |> List.filter (fun x -> x.Status = ReservingStatus.Active)
 
-let reservingResourceInTeam(reservingResource: ReservingResource, user: Employee) =
+let reservingResourceInTeam(reservingResource: ReservingResource, account: Account) =
     let team =
         match reservingResource with
         | VM  v -> v.Team
         | Organization o -> o.Team
         | Site s -> s.Team
-    user.InTeams |> List.contains team        
+    account.InTeams |> List.contains team        
 
 let toReservingResourceReserveStates(reservingResource: ReservingResource) =
     let lastActiveReserve = getReserves() |> Seq.tryFind (fun r -> r.ReservingResource = reservingResource && r.Status = ReservingStatus.Active)
@@ -31,14 +30,14 @@ let toReservingResourceReserveStates(reservingResource: ReservingResource) =
         | Some r -> Busy r
         | None _ -> Free reservingResource
 
-let getReservingResourceReserves(employee:Employee) = 
-    reservingResources() |> Seq.filter (fun r -> reservingResourceInTeam(r, employee)) |> succeed
+let getReservingResourceReserves(account:Account) = 
+    reservingResources() |> Seq.filter (fun r -> reservingResourceInTeam(r, account)) |> succeed
     
 let mapReservingResourceReserveStates rrr =
     rrr |> Seq.map (fun r -> toReservingResourceReserveStates(r)) |> succeed
     
-let getReservingResourceReserveStates(employee:Employee) =
-    getReservingResourceReserves(employee) |> bindR mapReservingResourceReserveStates
+let getReservingResourceReserveStates(account:Account) =
+    getReservingResourceReserves(account) |> bindR mapReservingResourceReserveStates
 
 let isFreeReservingResourceReserveState =
     function
@@ -48,12 +47,12 @@ let isFreeReservingResourceReserveState =
 let filterOnlyFreeReservingResourceReserveState a =
     a |> Seq.choose isFreeReservingResourceReserveState |> succeed
 
-let getFreeReservingResourceReserveStates(employee: Employee) =
-    employee |> getReservingResourceReserveStates |> bindR filterOnlyFreeReservingResourceReserveState
+let getFreeReservingResourceReserveStates(account: Account) =
+    account |> getReservingResourceReserveStates |> bindR filterOnlyFreeReservingResourceReserveState
     
-let createAddingReserve(employee) =
+let createAddingReserve(account) =
     succeed {
-        Employee = employee;
+        Account = account;
         ReservingResource = gCloudVm;
         ExpiredIn = now.AddDays(float 1);
         ReservingPeriod = ReservingPeriod.For2Hours
@@ -71,7 +70,7 @@ let allPeriods =
 
 let mapToReserve(addingReserve: AddingReserve) =
     {
-        Employee = addingReserve.Employee
+        Account = addingReserve.Account
         ReservingResource = addingReserve.ReservingResource
         From = DateTime.Now
         Status = ReservingStatus.Active

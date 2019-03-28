@@ -1,13 +1,12 @@
-module ReserveResource.Domain
+module ReserveResource.Types
 open System
-open ReserveResource.Rop
 
 type Team = {
     Id: Guid
     Name: string
 }
 
-type Employee = {
+type Account = {
     Id: Guid
     Name: string
     TelegramLogin: string
@@ -50,14 +49,14 @@ type ReservingPeriod =
     | For3Days
 
 type AddingReserve = {
-    Employee: Employee
+    Account: Account
     ReservingResource: ReservingResource
     ExpiredIn: DateTime
     ReservingPeriod: ReservingPeriod
 }
 
 type Reserve = {
-    Employee: Employee
+    Account: Account
     ReservingResource: ReservingResource
     From: DateTime
     ExpiredIn: DateTime
@@ -77,13 +76,7 @@ type ResourceReserveState =
     
 type DomainEvents =
     //errors
-    | UserNotFoundByTelegramAccount
-    | TelegramAccountIsEmpty
+    | AccountNotFoundByTelegramUser
     | ReservingResourceAlreadyBusy of BusyResourceReserveState
     //events
     | ReserveAdded of Reserve
-
-type ReserveResourceCallbackData = {
-    ResourceId: Guid
-    ForHours: float
-}

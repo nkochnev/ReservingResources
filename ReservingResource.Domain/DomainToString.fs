@@ -2,7 +2,7 @@ module ReserveResource.DomainToString
 
 open System
 open ReserveResource.Rop
-open ReserveResource.Domain
+open ReserveResource.Types
 
 let stringArrayToString collection =
             collection |> String.concat Environment.NewLine
@@ -31,7 +31,7 @@ let reservingResourcesToString(reservingResources: ReservingResource[]) =
 let reservingResourceStateToString = 
         function
                 | Free f -> reservingResourceToString f + " free"
-                | Busy b -> reservingResourceToString(b.ReservingResource) + " reserved by @" + b.Employee.TelegramLogin
+                | Busy b -> reservingResourceToString(b.ReservingResource) + " reserved by @" + b.Account.TelegramLogin
                             + " since from " + b.From.ToString()
                             + " for " + b.ExpiredIn.ToString()
 
@@ -47,7 +47,6 @@ let reservingPeriodToString =
 
 let getMessageFromDomainEvent =
     function
-    | UserNotFoundByTelegramAccount _ -> "Пользователь не зарегистрирован"
-    | TelegramAccountIsEmpty _ -> "У пользователя нет имени пользователя"
+    | AccountNotFoundByTelegramUser _ -> "Пользователь не зарегистрирован"
     | ReserveAdded r -> "Бронирование для " + reservingResourceToString r.ReservingResource + " добавлено"
     | ReservingResourceAlreadyBusy r -> "Нельзя забронировать ресурс " + reservingResourceToString r.ReservingResource + ", т.к. ресурс занят"

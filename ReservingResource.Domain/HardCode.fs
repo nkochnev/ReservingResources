@@ -1,18 +1,18 @@
 module ReserveResource.HardCode
 
 open System
-open ReserveResource.Domain
+open ReserveResource.Types
 
 let now = DateTime.Now;
 
 let gCloudTeam = {Id = Guid.NewGuid();Name = "GCloud";}
 let hotelTeam = {Id = Guid.NewGuid();Name = "Hotel";}
 
-let teamLeadUser = {Id = Guid.NewGuid(); Name = "TeamLead";TelegramLogin="nkochnev";InTeams = [gCloudTeam; hotelTeam] } 
-let middleUser = {Id = Guid.NewGuid(); Name = "Middle";TelegramLogin="middle";InTeams = [gCloudTeam] }
-let juniorUser = {Id = Guid.NewGuid(); Name = "Junior";TelegramLogin="junior";InTeams = [hotelTeam] }
+let teamLeadAccount = {Id = Guid.NewGuid(); Name = "TeamLead";TelegramLogin="nkochnev";InTeams = [gCloudTeam; hotelTeam] } 
+let middleAccount = {Id = Guid.NewGuid(); Name = "Middle";TelegramLogin="middle";InTeams = [gCloudTeam] }
+let juniorAccount = {Id = Guid.NewGuid(); Name = "Junior";TelegramLogin="junior";InTeams = [hotelTeam] }
 
-let users() = [teamLeadUser;middleUser;juniorUser]
+let accounts() = [teamLeadAccount;middleAccount;juniorAccount]
 
 let gCloud7777 = Site {Id = Guid.NewGuid();Name = "GCloud:7777";Url="http://GCloud:7777"; Team = gCloudTeam}
 let gCloud8888 = Site {Id = Guid.NewGuid();Name = "GCloud:8888";Url="http://GCloud:8888"; Team = gCloudTeam}
@@ -25,7 +25,7 @@ let holyHotelersOrganization = Organization {Id = Guid.NewGuid();Name = "Свя�
 let reservingResources() =  [gCloud7777; gCloud8888; gCloud9999; gCloudVm; hotelVm; holyHotelersOrganization]
 
 let gCloud7777ExpiredReserve = {
-    Employee = teamLeadUser;
+    Account = teamLeadAccount;
     ReservingResource = gCloud7777;
     From = now.AddDays(float -10);
     ExpiredIn = now.AddDays(float -1);
@@ -33,7 +33,7 @@ let gCloud7777ExpiredReserve = {
 }
 
 let gCloud7777ActiveReserve = {
-    Employee = teamLeadUser;
+    Account = teamLeadAccount;
     ReservingResource = gCloud7777;
     From = now.AddHours(float -10);
     ExpiredIn = now.AddDays(float 1);
@@ -41,7 +41,7 @@ let gCloud7777ActiveReserve = {
 }
 
 let gCloud9999ActiveReserve = {
-    Employee = middleUser;
+    Account = middleAccount;
     ReservingResource = gCloud9999;
     From = now.AddMinutes(float -1);
     ExpiredIn = now.AddDays(float 7);
