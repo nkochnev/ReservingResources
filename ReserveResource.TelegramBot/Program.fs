@@ -1,16 +1,18 @@
 ﻿module ReserveResource.TelegramBot
 
-open System
 open System.IO
 open ReserveResource.Rop
 open ReserveResource.Types
 open ReserveResource.DomainToString
 open ReserveResource.Logic
 open ReserveResource.TelegramBotInfrastructure
+open ReserveResource.Keyboard
 
 open Funogram.Bot
 open Funogram.Api
 open Funogram.Types
+open Funogram.Keyboard.Inline
+open ReserveResource.Keyboard.SelectResourceKeyboard
 
 let TokenFileName = "token"
 
@@ -31,71 +33,60 @@ let processMessageBuild config =
     let processResult (result: Result<'a, ApiResponseError>) =
         processResultWithValue result |> ignore
 
-    let botResult data = api config data |> Async.RunSynchronously
+    let botResult data = apiUntyped config data |> Async.RunSynchronously
     let bot data = botResult data |> processResult
     
     let updateArrived ctx = 
-        let fromId() = ctx.Update.Message.Value.From.Value.Id            
-        let sendMessageFormatted text parseMode = (sendMessageBase (ChatId.Int(fromId())) text (Some parseMode) None None None None) |> bot
+        let userId = if ctx.Update.Message.IsSome then ctx.Update.Message.Value.From.Value.Id
+                     else ctx.Update.CallbackQuery.Value.From.Id         
+        let sendMessageFormatted text parseMode = (sendMessageBase (ChatId.Int(userId)) text (Some parseMode) None None None None) |> bot
         
-        let printString str =
+        let showKeyboard def=InlineKeyboard.show bot userId def
+        let tryHandleKeyboard def=InlineKeyboard.tryHandleUpdate bot def
+        
+        let say str =
             sendMessageFormatted str ParseMode.Markdown
                     
-        let printDomainEvents evnts =
-            evnts |> Seq.map telegramBotEventsToString |> Seq.iter printString
-                    
-        let printDomainEvent evnt =
-            evnt |> telegramBotEventsToString |> printString
+        let shout evnts =
+            evnts |> Seq.map telegramBotEventsToString |> Seq.iter say
         
-        let printStringWithEvents(str, evnts) =
-            printString str
-            printDomainEvents evnts
-                    
+        let tell(str, evnts) =
+            say str
+            shout evnts
+                            
         let printStringResult(result: RopResult<string, TelegramBotEvents>) =
-            either printStringWithEvents printDomainEvents result
+            either tell shout result
         
-        let printUnitResult(result: RopResult<unit, TelegramBotEvents>) = 
-            either (fun (a, b) -> printDomainEvents b) printDomainEvents result
+        let adapter x = fun ()->(x|> succeed) 
         
-        let toFreeResourceReserveStateButton(rss: FreeResourceReserveState) =
-            [{
-              Text = reservingResourceToString rss
-              CallbackData = Some ("reserve1|" + (reservingResourceToId rss).ToString())
-              Url = None
-              CallbackGame = None
-              SwitchInlineQuery = None
-              SwitchInlineQueryCurrentChat = None
-            }] |> List.toSeq           
+        let createSelectResourceKeyboard freeResources = SelectResourceKeyboard.create config "Что будешь бронировать?"
+                                                           (fun date->say (date.Value.ResourceName)) (freeResources) |> succeed
         
-        let toFreeResourceReserveStateButtons(rss: seq<FreeResourceReserveState>) =
-            rss |> Seq.map toFreeResourceReserveStateButton |> succeed
-                    
-        let makeMarkup keyboard =
-                   succeed (Markup.InlineKeyboardMarkup {InlineKeyboard = keyboard})
+        let showSelectResourceKeyboard k =
+            k |> showKeyboard |> succeed
         
         let onGet() = (tryGetAccountFromContext ctx)
                       |> bindR getReservingResourceReserveStates
                       |> bindR reservingResourceStatesToString                         
-                      |> printStringResult
+                      |> printStringResult        
         
-        let onReserve() =
-            let markup = (tryGetAccountFromContext ctx)
-                            |> bindR getFreeReservingResourceReserveStates
-                            |> bindR toFreeResourceReserveStateButtons
-                            |> bindR makeMarkup
-            let mes = "Сейчас для бронирования доступные следующие ресурсы"
-            either (fun (a, b)-> (bot (sendMessageMarkup (fromId()) mes a))) (fun c -> (printDomainEvents c)) markup
-                                
-        let result =
+        // какая то дичь с созданием клавиатуры в случае, когда надо получить данные из БД
+        // в примере unit->'a, а у меня 'a -> 'b
+        
+        let onReserve() = (tryGetAccountFromContext ctx)
+                        |> bindR getFreeReservingResourceReserveStates
+                        |> bindR createSelectResourceKeyboard
+                        |> bindR showSelectResourceKeyboard
+                        |> either (fun _ -> ()) (fun c -> (shout c))                        
+                
+        let notHandled =
             processCommands ctx [
                 cmd "/get" (fun _ ->  onGet())
                 cmd "/reserve" (fun _ ->  onReserve())
+//                tryHandleUpdate (createSelectResourceKeyboard(Seq.empty<FreeResourceSelection>))
             ]
 
-        if not(result) then ()
-        else
-            let defaultMsg()=bot (sendMessage (fromId()) "Не понимаю о чем ты")
-            bot (sendMessage (fromId()) defaultText)
+        if notHandled then (bot (sendMessage (userId) defaultText))            
     updateArrived
 
 let start token =
