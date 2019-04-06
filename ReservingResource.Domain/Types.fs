@@ -33,14 +33,14 @@ type Site = {
     Url: string
 }
 
-type ReservingStatus =
-    | Active = 1
-    | Expired = 2
-
 type Resource =
     | VM of VirtualMachine
     | Organization of Organization
     | Site of Site
+    
+type ReservingStatus =
+    | Active = 1
+    | Expired = 2
 
 type ReservingPeriod =
     | For2Hours
@@ -67,16 +67,13 @@ type DbContext = {
     mutable Reserves: Reserve list;
 }
 
-type FreeResourceReserveState = Resource
-type BusyResourceReserveState = Reserve
-
-type ResourceReserveState =
-    | Free of FreeResourceReserveState
-    | Busy of BusyResourceReserveState
+type ResourceState =
+    | Free of Resource
+    | Busy of Reserve
     
 type DomainEvents =
     //errors
     | AccountNotFoundByTelegramUser
-    | ResourceAlreadyBusy of BusyResourceReserveState
+    | ResourceAlreadyBusy of Reserve
     //events
     | ReserveAdded of Reserve

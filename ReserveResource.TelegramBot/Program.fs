@@ -62,12 +62,12 @@ let processMessageBuild config =
                                                            |> succeed
         
         let onGet() = (tryGetAccountFromContext ctx)
-                      |> bindR getResourceReserveStates
+                      |> bindR getResourceStates
                       |> bindR resourceStatesToString                         
                       |> printStringResult        
                 
         let onReserve() = (tryGetAccountFromContext ctx)
-                        |> bindR getFreeResourceReserveStates
+                        |> bindR getFreeResourceStates
                         |> bindR selectResourceKeyboard
                         |> either (fun _ -> ()) (fun c -> (shout c))
                         

@@ -35,7 +35,7 @@ let resourceStateToString =
                             + " since from " + b.From.ToString()
                             + " for " + b.ExpiredIn.ToString()
 
-let resourceStatesToString(rrs: seq<ResourceReserveState>) =
+let resourceStatesToString(rrs: seq<ResourceState>) =
         rrs |> Seq.map resourceStateToString |> stringArrayToString  |> succeed      
 
 let reservingPeriodToString =

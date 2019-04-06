@@ -24,7 +24,7 @@ let resourceInTeam(resource: Resource, account: Account) =
         | Site s -> s.Team
     account.InTeams |> List.contains team        
 
-let toResourceReserveStates(resource: Resource) =
+let toResourceStates(resource: Resource) =
     let lastActiveReserve = getReserves() |> Seq.tryFind (fun r -> r.Resource = resource && r.Status = ReservingStatus.Active)
     match lastActiveReserve with
         | Some r -> Busy r
@@ -33,22 +33,22 @@ let toResourceReserveStates(resource: Resource) =
 let getResourceReserves(account:Account) = 
     resources() |> Seq.filter (fun r -> resourceInTeam(r, account)) |> succeed
     
-let mapResourceReserveStates rrr =
-    rrr |> Seq.map (fun r -> toResourceReserveStates(r)) |> succeed
+let mapResourceStates rrr =
+    rrr |> Seq.map (fun r -> toResourceStates(r)) |> succeed
     
-let getResourceReserveStates(account:Account) =
-    getResourceReserves(account) |> bindR mapResourceReserveStates
+let getResourceStates(account:Account) =
+    getResourceReserves(account) |> bindR mapResourceStates
 
-let isFreeResourceReserveState =
+let isFreeResourceState =
     function
         | Free f -> Some f
         | Busy _ -> None
 
-let filterOnlyFreeResourceReserveState a =
-    a |> Seq.choose isFreeResourceReserveState |> succeed
+let filterOnlyFreeResourceState a =
+    a |> Seq.choose isFreeResourceState |> succeed
 
-let getFreeResourceReserveStates(account: Account) =
-    account |> getResourceReserveStates |> bindR filterOnlyFreeResourceReserveState
+let getFreeResourceStates(account: Account) =
+    account |> getResourceStates |> bindR filterOnlyFreeResourceState
     
 let createAddingReserve(account) =
     succeed {
@@ -82,7 +82,7 @@ let addReserveToDb reserve =
     db <- {db with Reserves = tmp @ [reserve]}
 
 let tryAddReserve(addingReserve: AddingReserve) =
-    let state = toResourceReserveStates addingReserve.Resource
+    let state = toResourceStates addingReserve.Resource
     function
         | Busy b -> let state = DomainEvents.ResourceAlreadyBusy b
                     fail state

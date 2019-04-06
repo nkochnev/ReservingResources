@@ -55,7 +55,7 @@ module SelectResourceKeyboard =
 //            | ForDay -> 24
 //            | For3Days -> 24 * 3
     
-    let create botCfg text callback (getFreeResource: seq<FreeResourceReserveState>): KeyboardDefinition<FreeResourceSelection option>={
+    let create botCfg text callback (getFreeResource: seq<FreeResourceState>): KeyboardDefinition<FreeResourceSelection option>={
         Id="CONFIRM"
         DisableNotification=false
         HideAfterConfirm=true
