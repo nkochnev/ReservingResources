@@ -1,9 +1,7 @@
 namespace ReserveResource.Keyboard
 
 module SelectResourceKeyboard =
-    open System.Linq
     open System
-    open System.Text.RegularExpressions
     open Funogram.Keyboard.Inline
     open ReserveResource
     open ReserveResource.Types

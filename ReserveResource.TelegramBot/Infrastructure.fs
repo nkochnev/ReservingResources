@@ -21,6 +21,17 @@ type TelegramBotEvents =
 type ReserveState = { Type:string; Id: Guid }
     
 // functions
+
+let bindResult(result: Result<'a, DomainEvents>) =    
+    match result with
+        | Result.Ok o -> Result.Ok o
+        | Result.Error e -> Result.Error (TelegramBotEvents.DomainEvent e)
+
+let bindResult2(result: Result<DomainEvents, DomainEvents>) =    
+    match result with
+        | Result.Ok o -> Result.Ok (TelegramBotEvents.DomainEvent o)
+        | Result.Error e -> Result.Error (TelegramBotEvents.DomainEvent e)
+
     
 let telegramEventToString =
      function

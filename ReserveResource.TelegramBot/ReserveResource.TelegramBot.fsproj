@@ -8,8 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Infrastructure.fs" />
         <Compile Include="SelectResourceKeyboard.fs" />
+        <Compile Include="Infrastructure.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 

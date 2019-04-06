@@ -48,11 +48,32 @@ let processMessageBuild config =
             match result with
                 | Ok s -> say s
                 | Error e -> say (telegramBotEventsToString e)
+        
+        let sayResults(result: Result<TelegramBotEvents, TelegramBotEvents>) =
+            match result with
+                | Ok s -> say (telegramBotEventsToString s)
+                | Error e -> say (telegramBotEventsToString e)
+         
+        let reserve(freeResourceSelection: FreeResourceSelection option) =
+            match freeResourceSelection with
+            | Some f -> 
+                        (tryGetAccountFromContext ctx)
+                        |> Result.bind (fun account ->
+                            let r = getResourceById (account, f.ResourceId)
+                            match r with
+                                | Ok o -> Result.Ok (account, o)
+                                | Error e -> Result.Error (TelegramBotEvents.DomainEvent e)
+                            )
+                        |> Result.bind (fun (account, resource) -> bindResult (createAddingReserve(account, resource)))
+                        |> Result.map (fun addingReserve -> bindResult2 (tryAddReserve(addingReserve)))
+                        |> Result.map sayResults
+                        |> ignore
+            | None -> say "no selected action"
                         
         let selectResourceKeyboard freeResources = SelectResourceKeyboard.create config "Что будешь бронировать?"
-                                                           (fun (_,date)->say (sprintf "%A %A" date.Value.ResourceType date.Value.ResourceId)) (freeResources)
+                                                           (fun (_,date)->reserve(date)) (freeResources)
                                                            |> showKeyboard
-        
+            
         let onGet() = (tryGetAccountFromContext ctx)
                       |> Result.map getResourceStates
                       |> Result.map resourceStatesToString                         

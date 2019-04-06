@@ -1,5 +1,6 @@
 module ReserveResource.Types
 open System
+open System
 
 type Team = {
     Id: Guid
@@ -37,6 +38,8 @@ type Resource =
     | VM of VirtualMachine
     | Organization of Organization
     | Site of Site
+
+type FreeResource = Resource
     
 type ReservingStatus =
     | Active = 1
@@ -50,8 +53,7 @@ type ReservingPeriod =
 
 type AddingReserve = {
     Account: Account
-    Resource: Resource
-    ExpiredIn: DateTime
+    Resource: FreeResource
     ReservingPeriod: ReservingPeriod
 }
 
@@ -67,8 +69,6 @@ type DbContext = {
     mutable Reserves: Reserve list;
 }
 
-type FreeResource = Resource
-
 type ResourceState =
     | Free of FreeResource
     | Busy of Reserve
@@ -77,5 +77,6 @@ type DomainEvents =
     //errors
     | AccountNotFoundByTelegramUser
     | ResourceAlreadyBusy of Reserve
+    | ResourceByIdNotFound of Guid
     //events
     | ReserveAdded of Reserve

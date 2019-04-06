@@ -1,7 +1,9 @@
 module ReserveResource.Logic
 
+open ReserveResource
 open System
 open ReserveResource.Types
+open ReserveResource.DomainToString
 open ReserveResource.HardCode
 
 let mutable db = {Reserves = [gCloud7777ExpiredReserve; gCloud7777ActiveReserve; gCloud9999ActiveReserve]}
@@ -29,11 +31,17 @@ let toResourceStates(resource: Resource) =
         | Some r -> Busy r
         | None _ -> Free resource
 
-let getResourceReserves(account:Account) = 
+let getResources(account:Account) = 
     resources() |> Seq.filter (fun r -> isResourceInTeam(r, account))
+
+let getResourceById(account:Account, id) = 
+    let resource = getResources(account) |> Seq.tryFind (fun r -> (resourceToId r) = id)
+    match resource with
+        | Some r -> Result.Ok r
+        | None -> Result.Error (ResourceByIdNotFound id)
     
 let getResourceStates(account:Account) =
-    getResourceReserves(account) |> Seq.map toResourceStates
+    getResources(account) |> Seq.map toResourceStates
 
 let isFreeResourceState =
     function
@@ -42,14 +50,20 @@ let isFreeResourceState =
 
 let getFreeResourceStates(account: Account) =
     account |> getResourceStates |> Seq.choose isFreeResourceState
+  
+let checkResourceIsFree(resource: Resource) =
+    let state = toResourceStates resource
+    match state with
+        | Busy b -> Result.Error (DomainEvents.ResourceAlreadyBusy b)
+        | Free f -> Result.Ok f
     
-let createAddingReserve(account) =
-    {
-        Account = account;
-        Resource = gCloudVm;
-        ExpiredIn = now.AddDays(float 1);
-        ReservingPeriod = ReservingPeriod.For2Hours
-    }
+let createAddingReserve(account: Account, resource: Resource) =
+    checkResourceIsFree resource
+    |> Result.map (fun freeResource -> {
+                        Account = account;
+                        Resource = freeResource;
+                        ReservingPeriod = ReservingPeriod.For2Hours
+                    })
 
 let getHoursFromReservingPeriod =
     function
@@ -73,13 +87,8 @@ let mapToReserve(addingReserve: AddingReserve) =
 let addReserveToDb reserve =
     let tmp = db.Reserves;
     db <- {db with Reserves = tmp @ [reserve]}
-
-let tryAddReserve(addingReserve: AddingReserve) =
-    let state = toResourceStates addingReserve.Resource
-    function
-        | Busy b -> let state = DomainEvents.ResourceAlreadyBusy b
-                    Result.Error state
-        | Free f -> let reserve = mapToReserve addingReserve
-                    addReserveToDb reserve
-                    let event = DomainEvents.ReserveAdded reserve
-                    Result.Ok event
+    
+let tryAddReserve(addingReserve: AddingReserve) : Result<DomainEvents, DomainEvents> =    
+    let reserve = mapToReserve addingReserve
+    addReserveToDb reserve
+    Result.Ok (DomainEvents.ReserveAdded reserve)

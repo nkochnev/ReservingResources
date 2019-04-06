@@ -48,4 +48,5 @@ let getMessageFromDomainEvent =
     function
     | AccountNotFoundByTelegramUser _ -> "Пользователь не зарегистрирован"
     | ReserveAdded r -> "Бронирование для " + resourceToString r.Resource + " добавлено"
+    | ResourceByIdNotFound id -> "Ресурс с идентификатором " + id.ToString() + " не найден"
     | ResourceAlreadyBusy r -> "Нельзя забронировать ресурс " + resourceToString r.Resource + ", т.к. ресурс занят"
