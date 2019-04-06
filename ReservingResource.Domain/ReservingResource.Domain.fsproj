@@ -5,7 +5,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Rop.fs" />
         <Compile Include="Types.fs" />
         <Compile Include="DomainToString.fs" />
         <Compile Include="HardCode.fs" />

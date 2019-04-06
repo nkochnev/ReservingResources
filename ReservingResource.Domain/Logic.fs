@@ -1,7 +1,6 @@
 module ReserveResource.Logic
 
 open System
-open ReserveResource.Rop
 open ReserveResource.Types
 open ReserveResource.HardCode
 
@@ -16,7 +15,7 @@ let getReserves() = db.Reserves
 let getActiveReserves() =
     getReserves() |> List.filter (fun x -> x.Status = ReservingStatus.Active)
 
-let resourceInTeam(resource: Resource, account: Account) =
+let isResourceInTeam(resource: Resource, account: Account) =
     let team =
         match resource with
         | VM  v -> v.Team
@@ -31,27 +30,21 @@ let toResourceStates(resource: Resource) =
         | None _ -> Free resource
 
 let getResourceReserves(account:Account) = 
-    resources() |> Seq.filter (fun r -> resourceInTeam(r, account)) |> succeed
-    
-let mapResourceStates rrr =
-    rrr |> Seq.map (fun r -> toResourceStates(r)) |> succeed
+    resources() |> Seq.filter (fun r -> isResourceInTeam(r, account))
     
 let getResourceStates(account:Account) =
-    getResourceReserves(account) |> bindR mapResourceStates
+    getResourceReserves(account) |> Seq.map toResourceStates
 
 let isFreeResourceState =
     function
         | Free f -> Some f
         | Busy _ -> None
 
-let filterOnlyFreeResourceState a =
-    a |> Seq.choose isFreeResourceState |> succeed
-
 let getFreeResourceStates(account: Account) =
-    account |> getResourceStates |> bindR filterOnlyFreeResourceState
+    account |> getResourceStates |> Seq.choose isFreeResourceState
     
 let createAddingReserve(account) =
-    succeed {
+    {
         Account = account;
         Resource = gCloudVm;
         ExpiredIn = now.AddDays(float 1);
@@ -85,9 +78,8 @@ let tryAddReserve(addingReserve: AddingReserve) =
     let state = toResourceStates addingReserve.Resource
     function
         | Busy b -> let state = DomainEvents.ResourceAlreadyBusy b
-                    fail state
+                    Result.Error state
         | Free f -> let reserve = mapToReserve addingReserve
                     addReserveToDb reserve
                     let event = DomainEvents.ReserveAdded reserve
-                    succeedWithMsg () event
-                    
+                    Result.Ok event

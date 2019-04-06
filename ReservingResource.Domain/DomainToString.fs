@@ -1,7 +1,6 @@
 module ReserveResource.DomainToString
 
 open System
-open ReserveResource.Rop
 open ReserveResource.Types
 
 let stringArrayToString collection =
@@ -26,7 +25,7 @@ let resourceToId =
                 | Site s -> s.Id
 
 let resourcesToString(resources: Resource[]) =
-        resources |> Seq.map resourceToString |> stringArrayToString |> succeed
+        resources |> Seq.map resourceToString |> stringArrayToString
     
 let resourceStateToString = 
         function
@@ -36,7 +35,7 @@ let resourceStateToString =
                             + " for " + b.ExpiredIn.ToString()
 
 let resourceStatesToString(rrs: seq<ResourceState>) =
-        rrs |> Seq.map resourceStateToString |> stringArrayToString  |> succeed      
+        rrs |> Seq.map resourceStateToString |> stringArrayToString
 
 let reservingPeriodToString =
         function

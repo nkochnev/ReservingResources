@@ -1,8 +1,6 @@
 ﻿module ReserveResource.TelegramBot
 
 open System.IO
-open ReserveResource.Rop
-open ReserveResource.Types
 open ReserveResource.DomainToString
 open ReserveResource.Logic
 open ReserveResource.TelegramBotInfrastructure
@@ -46,30 +44,25 @@ let processMessageBuild config =
         let say str =
             sendMessageFormatted str ParseMode.Markdown
                     
-        let shout evnts =
-            evnts |> Seq.map telegramBotEventsToString |> Seq.iter say
-        
-        let tell(str, evnts) =
-            say str
-            shout evnts
-                            
-        let printStringResult(result: RopResult<string, TelegramBotEvents>) =
-            either tell shout result
+        let sayResult(result: Result<string, TelegramBotEvents>) =
+            match result with
+                | Ok s -> say s
+                | Error e -> say (telegramBotEventsToString e)
                         
         let selectResourceKeyboard freeResources = SelectResourceKeyboard.create config "Что будешь бронировать?"
                                                            (fun (_,date)->say (sprintf "%A %A" date.Value.ResourceType date.Value.ResourceId)) (freeResources)
                                                            |> showKeyboard
-                                                           |> succeed
         
         let onGet() = (tryGetAccountFromContext ctx)
-                      |> bindR getResourceStates
-                      |> bindR resourceStatesToString                         
-                      |> printStringResult        
+                      |> Result.map getResourceStates
+                      |> Result.map resourceStatesToString                         
+                      |> sayResult        
                 
         let onReserve() = (tryGetAccountFromContext ctx)
-                        |> bindR getFreeResourceStates
-                        |> bindR selectResourceKeyboard
-                        |> either (fun _ -> ()) (fun c -> (shout c))
+                        |> Result.map getFreeResourceStates
+                        |> Result.map selectResourceKeyboard
+                        |> Result.mapError (fun a->say (telegramBotEventsToString a))
+                        |> ignore
                         
         let cmds=[
                 cmd "/get" (fun _ ->  onGet())

@@ -67,8 +67,10 @@ type DbContext = {
     mutable Reserves: Reserve list;
 }
 
+type FreeResource = Resource
+
 type ResourceState =
-    | Free of Resource
+    | Free of FreeResource
     | Busy of Reserve
     
 type DomainEvents =
