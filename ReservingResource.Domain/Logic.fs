@@ -16,44 +16,44 @@ let getReserves() = db.Reserves
 let getActiveReserves() =
     getReserves() |> List.filter (fun x -> x.Status = ReservingStatus.Active)
 
-let reservingResourceInTeam(reservingResource: ReservingResource, account: Account) =
+let resourceInTeam(resource: Resource, account: Account) =
     let team =
-        match reservingResource with
+        match resource with
         | VM  v -> v.Team
         | Organization o -> o.Team
         | Site s -> s.Team
     account.InTeams |> List.contains team        
 
-let toReservingResourceReserveStates(reservingResource: ReservingResource) =
-    let lastActiveReserve = getReserves() |> Seq.tryFind (fun r -> r.ReservingResource = reservingResource && r.Status = ReservingStatus.Active)
+let toResourceReserveStates(resource: Resource) =
+    let lastActiveReserve = getReserves() |> Seq.tryFind (fun r -> r.Resource = resource && r.Status = ReservingStatus.Active)
     match lastActiveReserve with
         | Some r -> Busy r
-        | None _ -> Free reservingResource
+        | None _ -> Free resource
 
-let getReservingResourceReserves(account:Account) = 
-    reservingResources() |> Seq.filter (fun r -> reservingResourceInTeam(r, account)) |> succeed
+let getResourceReserves(account:Account) = 
+    resources() |> Seq.filter (fun r -> resourceInTeam(r, account)) |> succeed
     
-let mapReservingResourceReserveStates rrr =
-    rrr |> Seq.map (fun r -> toReservingResourceReserveStates(r)) |> succeed
+let mapResourceReserveStates rrr =
+    rrr |> Seq.map (fun r -> toResourceReserveStates(r)) |> succeed
     
-let getReservingResourceReserveStates(account:Account) =
-    getReservingResourceReserves(account) |> bindR mapReservingResourceReserveStates
+let getResourceReserveStates(account:Account) =
+    getResourceReserves(account) |> bindR mapResourceReserveStates
 
-let isFreeReservingResourceReserveState =
+let isFreeResourceReserveState =
     function
         | Free f -> Some f
         | Busy _ -> None
 
-let filterOnlyFreeReservingResourceReserveState a =
-    a |> Seq.choose isFreeReservingResourceReserveState |> succeed
+let filterOnlyFreeResourceReserveState a =
+    a |> Seq.choose isFreeResourceReserveState |> succeed
 
-let getFreeReservingResourceReserveStates(account: Account) =
-    account |> getReservingResourceReserveStates |> bindR filterOnlyFreeReservingResourceReserveState
+let getFreeResourceReserveStates(account: Account) =
+    account |> getResourceReserveStates |> bindR filterOnlyFreeResourceReserveState
     
 let createAddingReserve(account) =
     succeed {
         Account = account;
-        ReservingResource = gCloudVm;
+        Resource = gCloudVm;
         ExpiredIn = now.AddDays(float 1);
         ReservingPeriod = ReservingPeriod.For2Hours
     }
@@ -71,7 +71,7 @@ let allPeriods =
 let mapToReserve(addingReserve: AddingReserve) =
     {
         Account = addingReserve.Account
-        ReservingResource = addingReserve.ReservingResource
+        Resource = addingReserve.Resource
         From = DateTime.Now
         Status = ReservingStatus.Active
         ExpiredIn = addingReserve.ReservingPeriod |> getHoursFromReservingPeriod |> DateTime.Now.AddHours 
@@ -82,9 +82,9 @@ let addReserveToDb reserve =
     db <- {db with Reserves = tmp @ [reserve]}
 
 let tryAddReserve(addingReserve: AddingReserve) =
-    let state = toReservingResourceReserveStates addingReserve.ReservingResource
+    let state = toResourceReserveStates addingReserve.Resource
     function
-        | Busy b -> let state = DomainEvents.ReservingResourceAlreadyBusy b
+        | Busy b -> let state = DomainEvents.ResourceAlreadyBusy b
                     fail state
         | Free f -> let reserve = mapToReserve addingReserve
                     addReserveToDb reserve

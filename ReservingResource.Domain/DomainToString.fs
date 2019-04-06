@@ -7,36 +7,36 @@ open ReserveResource.Types
 let stringArrayToString collection =
             collection |> String.concat Environment.NewLine
     
-let reservingResourceToString = 
+let resourceToString = 
         function
                 | VM vm-> "(vm) " + vm.Name
                 | Organization org -> "(org) " + org.Name
                 | Site s -> "(site) " + s.Name
 
-let reservingResourceToName(rr: ReservingResource) = 
+let resourceToName(rr: Resource) = 
         match rr with
                 | VM vm-> vm.Name
                 | Organization org -> org.Name
                 | Site s -> s.Name
 
-let reservingResourceToId = 
+let resourceToId = 
         function
                 | VM vm-> vm.Id
                 | Organization org -> org.Id
                 | Site s -> s.Id
 
-let reservingResourcesToString(reservingResources: ReservingResource[]) =
-        reservingResources |> Seq.map reservingResourceToString |> stringArrayToString |> succeed
+let resourcesToString(resources: Resource[]) =
+        resources |> Seq.map resourceToString |> stringArrayToString |> succeed
     
-let reservingResourceStateToString = 
+let resourceStateToString = 
         function
-                | Free f -> reservingResourceToString f + " free"
-                | Busy b -> reservingResourceToString(b.ReservingResource) + " reserved by @" + b.Account.TelegramLogin
+                | Free f -> resourceToString f + " free"
+                | Busy b -> resourceToString(b.Resource) + " reserved by @" + b.Account.TelegramLogin
                             + " since from " + b.From.ToString()
                             + " for " + b.ExpiredIn.ToString()
 
-let reservingResourceStatesToString(rrs: seq<ResourceReserveState>) =
-        rrs |> Seq.map reservingResourceStateToString |> stringArrayToString  |> succeed      
+let resourceStatesToString(rrs: seq<ResourceReserveState>) =
+        rrs |> Seq.map resourceStateToString |> stringArrayToString  |> succeed      
 
 let reservingPeriodToString =
         function
@@ -48,5 +48,5 @@ let reservingPeriodToString =
 let getMessageFromDomainEvent =
     function
     | AccountNotFoundByTelegramUser _ -> "Пользователь не зарегистрирован"
-    | ReserveAdded r -> "Бронирование для " + reservingResourceToString r.ReservingResource + " добавлено"
-    | ReservingResourceAlreadyBusy r -> "Нельзя забронировать ресурс " + reservingResourceToString r.ReservingResource + ", т.к. ресурс занят"
+    | ReserveAdded r -> "Бронирование для " + resourceToString r.Resource + " добавлено"
+    | ResourceAlreadyBusy r -> "Нельзя забронировать ресурс " + resourceToString r.Resource + ", т.к. ресурс занят"

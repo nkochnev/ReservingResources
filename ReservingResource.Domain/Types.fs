@@ -37,7 +37,7 @@ type ReservingStatus =
     | Active = 1
     | Expired = 2
 
-type ReservingResource =
+type Resource =
     | VM of VirtualMachine
     | Organization of Organization
     | Site of Site
@@ -50,14 +50,14 @@ type ReservingPeriod =
 
 type AddingReserve = {
     Account: Account
-    ReservingResource: ReservingResource
+    Resource: Resource
     ExpiredIn: DateTime
     ReservingPeriod: ReservingPeriod
 }
 
 type Reserve = {
     Account: Account
-    ReservingResource: ReservingResource
+    Resource: Resource
     From: DateTime
     ExpiredIn: DateTime
     Status: ReservingStatus
@@ -67,7 +67,7 @@ type DbContext = {
     mutable Reserves: Reserve list;
 }
 
-type FreeResourceReserveState = ReservingResource
+type FreeResourceReserveState = Resource
 type BusyResourceReserveState = Reserve
 
 type ResourceReserveState =
@@ -77,6 +77,6 @@ type ResourceReserveState =
 type DomainEvents =
     //errors
     | AccountNotFoundByTelegramUser
-    | ReservingResourceAlreadyBusy of BusyResourceReserveState
+    | ResourceAlreadyBusy of BusyResourceReserveState
     //events
     | ReserveAdded of Reserve

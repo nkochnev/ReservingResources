@@ -22,11 +22,11 @@ let gCloudVm = VM {Id = Guid.NewGuid();Name = "GCloud-vm";DomainName = "GCloud-v
 let hotelVm = VM {Id = Guid.NewGuid();Name = "vm-fms-04";DomainName = "vm-fms-04"; Team = hotelTeam}
 let holyHotelersOrganization = Organization {Id = Guid.NewGuid();Name = "Святые отельеры";Team = hotelTeam}
 
-let reservingResources() =  [gCloud7777; gCloud8888; gCloud9999; gCloudVm; hotelVm; holyHotelersOrganization]
+let resources() =  [gCloud7777; gCloud8888; gCloud9999; gCloudVm; hotelVm; holyHotelersOrganization]
 
 let gCloud7777ExpiredReserve = {
     Account = teamLeadAccount;
-    ReservingResource = gCloud7777;
+    Resource = gCloud7777;
     From = now.AddDays(float -10);
     ExpiredIn = now.AddDays(float -1);
     Status = ReservingStatus.Expired
@@ -34,7 +34,7 @@ let gCloud7777ExpiredReserve = {
 
 let gCloud7777ActiveReserve = {
     Account = teamLeadAccount;
-    ReservingResource = gCloud7777;
+    Resource = gCloud7777;
     From = now.AddHours(float -10);
     ExpiredIn = now.AddDays(float 1);
     Status = ReservingStatus.Active
@@ -42,7 +42,7 @@ let gCloud7777ActiveReserve = {
 
 let gCloud9999ActiveReserve = {
     Account = middleAccount;
-    ReservingResource = gCloud9999;
+    Resource = gCloud9999;
     From = now.AddMinutes(float -1);
     ExpiredIn = now.AddDays(float 7);
     Status = ReservingStatus.Active

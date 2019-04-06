@@ -42,11 +42,11 @@ module SelectResourceKeyboard =
                 let id= parts.[1]|> Guid
                 Some {ResourceType = t; ResourceId = id}
     
-    let resourceToState (rr:ReservingResource) =
+    let resourceToState (rr:Resource) =
         match rr with
-            | ReservingResource.VM vm -> (rr, {ResourceType = VM; ResourceId = vm.Id})
-            | ReservingResource.Site site -> (rr, {ResourceType = Site; ResourceId = site.Id})
-            | ReservingResource.Organization org -> (rr, {ResourceType = Organization; ResourceId = org.Id})
+            | Resource.VM vm -> (rr, {ResourceType = VM; ResourceId = vm.Id})
+            | Resource.Site site -> (rr, {ResourceType = Site; ResourceId = site.Id})
+            | Resource.Organization org -> (rr, {ResourceType = Organization; ResourceId = org.Id})
     
 //    let serializeReservingPeriod =
 //        function
@@ -73,7 +73,7 @@ module SelectResourceKeyboard =
                                        |> Seq.toList
                           for state in states do
                             let (rr,s)= state
-                            yield OK(DomainToString.reservingResourceToString rr, Some s)
+                            yield OK(DomainToString.resourceToString rr, Some s)
                    }
         TryDeserialize=fun d-> Some (strToFreeResourceSelection d)
         DoWhenConfirmed=callback
