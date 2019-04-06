@@ -64,7 +64,7 @@ let processMessageBuild config =
                                 | Ok o -> Result.Ok (account, o)
                                 | Error e -> Result.Error (TelegramBotEvents.DomainEvent e)
                             )
-                        |> Result.bind (fun (account, resource) -> bindResult (createAddingReserve(account, resource)))
+                        |> Result.bind (fun (account, resource) -> bindResult (createAddingReserve(account, resource, f.Period)))
                         |> Result.map (fun addingReserve -> bindResult2 (tryAddReserve(addingReserve)))
                         |> Result.map sayResults
                         |> ignore

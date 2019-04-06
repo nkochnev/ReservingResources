@@ -4,6 +4,9 @@ module SelectResourceKeyboard =
     open System
     open Funogram.Keyboard.Inline
     open ReserveResource
+    open ReserveResource
+    open ReserveResource
+    open ReserveResource
     open ReserveResource.Types
         
     type FreeResourceType =
@@ -12,47 +15,39 @@ module SelectResourceKeyboard =
         | Site
     
     type FreeResourceSelection = {
-        ResourceType: FreeResourceType
         ResourceId: Guid
+        Period: ReservingPeriod
     }
-        
-    let serializeFreeResourceType =
-        function
-            | VM -> "VM"
-            | Organization -> "ORG"
-            | Site -> "SITE"
     
-    let deserializeFreeResourceType =
+    let deserializeReservingPeriod =
         function
-            | "VM" -> VM
-            | "ORG" -> Organization
-            | "SITE" -> Site
-            | _ -> failwith "cannot deserialize value to FreeResourceType"
+            | 2 -> For2Hours
+            | 6 -> For6Hours
+            | 24 -> ForDay 
+            | 72 -> For3Days
+            | _ -> failwith "deserializeReservingPeriod error"
+    
+    let serializeReservingPeriod =
+        function
+            | For2Hours -> 2
+            | For6Hours -> 6
+            | ForDay -> 24
+            | For3Days -> 24 * 3
     
     let private freeResourceSelectionToStr frs =
         match frs with
-            | Some f -> sprintf "%s;%A" (serializeFreeResourceType f.ResourceType) f.ResourceId
+            | Some f -> sprintf "%i;%A" (serializeReservingPeriod f.Period) f.ResourceId
             | None _ -> ""
         
     let private strToFreeResourceSelection (s:string)=
                 let parts = s.Split [|';'|]
-                let t= parts.[0] |> deserializeFreeResourceType
+                let period= parts.[0] |> int |> deserializeReservingPeriod
                 let id= parts.[1]|> Guid
-                Some {ResourceType = t; ResourceId = id}
+                Some {ResourceId = id; Period = period}
     
-    let resourceToState (rr:Resource) =
-        match rr with
-            | Resource.VM vm -> (rr, {ResourceType = VM; ResourceId = vm.Id})
-            | Resource.Site site -> (rr, {ResourceType = Site; ResourceId = site.Id})
-            | Resource.Organization org -> (rr, {ResourceType = Organization; ResourceId = org.Id})
-    
-//    let serializeReservingPeriod =
-//        function
-//            | For2Hours -> 2
-//            | For6Hours -> 6
-//            | ForDay -> 24
-//            | For3Days -> 24 * 3
-    
+    let resourceToState (rr:Resource, period) =
+        Some {ResourceId = (DomainToString.resourceToId rr); Period = period}
+        
     let create botCfg text callback (freeResources: seq<FreeResource>): KeyboardDefinition<FreeResourceSelection option>={
         Id="CONFIRM"
         DisableNotification=false
@@ -66,12 +61,13 @@ module SelectResourceKeyboard =
                    let B=keys.Change
                    let OK=keys.Confirm
                    keys {     
-                          let states = freeResources
-                                       |> Seq.map resourceToState
-                                       |> Seq.toList
-                          for state in states do
-                            let (rr,s)= state
-                            yield OK(DomainToString.resourceToString rr, Some s)
+                          for resource in freeResources |> Seq.toList do                            
+                            yield X(DomainToString.resourceToString resource);
+                            yield! Logic.allPeriods
+                                   |> Seq.map (fun period ->
+                                                      let state = resourceToState(resource, period)
+                                                      let btnName = (DomainToString.reservingPeriodToString period);
+                                                      OK(btnName,state))
                    }
         TryDeserialize=fun d-> Some (strToFreeResourceSelection d)
         DoWhenConfirmed=callback

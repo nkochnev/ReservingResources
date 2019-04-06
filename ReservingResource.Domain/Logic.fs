@@ -57,12 +57,12 @@ let checkResourceIsFree(resource: Resource) =
         | Busy b -> Result.Error (DomainEvents.ResourceAlreadyBusy b)
         | Free f -> Result.Ok f
     
-let createAddingReserve(account: Account, resource: Resource) =
+let createAddingReserve(account: Account, resource: Resource, period: ReservingPeriod) =
     checkResourceIsFree resource
     |> Result.map (fun freeResource -> {
                         Account = account;
                         Resource = freeResource;
-                        ReservingPeriod = ReservingPeriod.For2Hours
+                        ReservingPeriod = period
                     })
 
 let getHoursFromReservingPeriod =
