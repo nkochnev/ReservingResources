@@ -55,14 +55,11 @@ let processMessageBuild config =
                             
         let printStringResult(result: RopResult<string, TelegramBotEvents>) =
             either tell shout result
-        
-        let adapter x = fun ()->(x|> succeed) 
-        
-        let createSelectResourceKeyboard freeResources = SelectResourceKeyboard.create config "Что будешь бронировать?"
-                                                           (fun (_,date)->say (date.Value.ResourceId.ToString())) (freeResources) |> succeed
-        
-        let showSelectResourceKeyboard k =
-            k |> showKeyboard |> succeed
+                        
+        let selectResourceKeyboard freeResources = SelectResourceKeyboard.create config "Что будешь бронировать?"
+                                                           (fun (_,date)->say (sprintf "%A %A" date.Value.ResourceType date.Value.ResourceId)) (freeResources)
+                                                           |> showKeyboard
+                                                           |> succeed
         
         let onGet() = (tryGetAccountFromContext ctx)
                       |> bindR getReservingResourceReserveStates
@@ -71,8 +68,7 @@ let processMessageBuild config =
                 
         let onReserve() = (tryGetAccountFromContext ctx)
                         |> bindR getFreeReservingResourceReserveStates
-                        |> bindR createSelectResourceKeyboard
-                        |> bindR showSelectResourceKeyboard
+                        |> bindR selectResourceKeyboard
                         |> either (fun _ -> ()) (fun c -> (shout c))
                         
         let cmds=[

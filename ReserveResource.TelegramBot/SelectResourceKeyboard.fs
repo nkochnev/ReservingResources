@@ -16,7 +16,6 @@ module SelectResourceKeyboard =
     type FreeResourceSelection = {
         ResourceType: FreeResourceType
         ResourceId: Guid
-        ResourceName: string
     }
         
     let serializeFreeResourceType =
@@ -41,13 +40,13 @@ module SelectResourceKeyboard =
                 let parts = s.Split [|';'|]
                 let t= parts.[0] |> deserializeFreeResourceType
                 let id= parts.[1]|> Guid
-                Some {ResourceType = t; ResourceId = id; ResourceName = "1"}
+                Some {ResourceType = t; ResourceId = id}
     
-    let resourceToState (rr:ReservingResource) : FreeResourceSelection =
+    let resourceToState (rr:ReservingResource) =
         match rr with
-            | ReservingResource.VM vm -> {ResourceType = VM; ResourceId = vm.Id; ResourceName = DomainToString.reservingResourceToString rr}
-            | ReservingResource.Site site -> {ResourceType = Site; ResourceId = site.Id; ResourceName = DomainToString.reservingResourceToString rr}
-            | ReservingResource.Organization org -> {ResourceType = Organization; ResourceId = org.Id; ResourceName = DomainToString.reservingResourceToString rr}
+            | ReservingResource.VM vm -> (rr, {ResourceType = VM; ResourceId = vm.Id})
+            | ReservingResource.Site site -> (rr, {ResourceType = Site; ResourceId = site.Id})
+            | ReservingResource.Organization org -> (rr, {ResourceType = Organization; ResourceId = org.Id})
     
 //    let serializeReservingPeriod =
 //        function
@@ -72,8 +71,9 @@ module SelectResourceKeyboard =
                           let states = getFreeResource
                                        |> Seq.map resourceToState
                                        |> Seq.toList
-                          for state in states do 
-                            yield OK(state.ResourceName, Some state)
+                          for state in states do
+                            let (rr,s)= state
+                            yield OK(DomainToString.reservingResourceToString rr, Some s)
                    }
         TryDeserialize=fun d-> Some (strToFreeResourceSelection d)
         DoWhenConfirmed=callback
