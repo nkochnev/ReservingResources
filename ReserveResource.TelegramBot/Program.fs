@@ -42,7 +42,6 @@ let processMessageBuild config =
         let sendMessageFormatted text parseMode = (sendMessageBase (ChatId.Int(userId)) text (Some parseMode) None None None None) |> bot
         
         let showKeyboard def=InlineKeyboard.show bot userId def
-        let tryHandleKeyboard def=InlineKeyboard.tryHandleUpdate bot def
         
         let say str =
             sendMessageFormatted str ParseMode.Markdown
@@ -60,7 +59,7 @@ let processMessageBuild config =
         let adapter x = fun ()->(x|> succeed) 
         
         let createSelectResourceKeyboard freeResources = SelectResourceKeyboard.create config "Что будешь бронировать?"
-                                                           (fun date->say (date.Value.ResourceName)) (freeResources) |> succeed
+                                                           (fun (_,date)->say (date.Value.ResourceId.ToString())) (freeResources) |> succeed
         
         let showSelectResourceKeyboard k =
             k |> showKeyboard |> succeed
@@ -69,24 +68,21 @@ let processMessageBuild config =
                       |> bindR getReservingResourceReserveStates
                       |> bindR reservingResourceStatesToString                         
                       |> printStringResult        
-        
-        // какая то дичь с созданием клавиатуры в случае, когда надо получить данные из БД
-        // в примере unit->'a, а у меня 'a -> 'b
-        
+                
         let onReserve() = (tryGetAccountFromContext ctx)
                         |> bindR getFreeReservingResourceReserveStates
                         |> bindR createSelectResourceKeyboard
                         |> bindR showSelectResourceKeyboard
-                        |> either (fun _ -> ()) (fun c -> (shout c))                        
-                
-        let notHandled =
-            processCommands ctx [
+                        |> either (fun _ -> ()) (fun c -> (shout c))
+                        
+        let cmds=[
                 cmd "/get" (fun _ ->  onGet())
                 cmd "/reserve" (fun _ ->  onReserve())
-//                tryHandleUpdate (createSelectResourceKeyboard(Seq.empty<FreeResourceSelection>))
             ]
-
-        if notHandled then (bot (sendMessage (userId) defaultText))            
+        let notHandled =
+            processCommands ctx (cmds @ InlineKeyboard.getRegisteredHandlers())
+        if notHandled then             
+            bot (sendMessage userId defaultText)            
     updateArrived
 
 let start token =

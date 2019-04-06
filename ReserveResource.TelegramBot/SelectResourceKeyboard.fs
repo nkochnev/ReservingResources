@@ -18,7 +18,7 @@ module SelectResourceKeyboard =
         ResourceId: Guid
         ResourceName: string
     }
-    
+        
     let serializeFreeResourceType =
         function
             | VM -> "VM"
@@ -34,15 +34,14 @@ module SelectResourceKeyboard =
     
     let private freeResourceSelectionToStr frs =
         match frs with
-            | Some f -> sprintf "%s|%A" (serializeFreeResourceType f.ResourceType) f.ResourceId
+            | Some f -> sprintf "%s;%A" (serializeFreeResourceType f.ResourceType) f.ResourceId
             | None _ -> ""
         
     let private strToFreeResourceSelection (s:string)=
-                Console.WriteLine s
-                let parts = s.Split [|'|'|]
+                let parts = s.Split [|';'|]
                 let t= parts.[0] |> deserializeFreeResourceType
                 let id= parts.[1]|> Guid
-                Some {ResourceType = t; ResourceId = id; ResourceName = ""}
+                Some {ResourceType = t; ResourceId = id; ResourceName = "1"}
     
     let resourceToState (rr:ReservingResource) : FreeResourceSelection =
         match rr with
