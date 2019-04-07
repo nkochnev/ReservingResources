@@ -21,9 +21,5 @@
   <ItemGroup>
     <ProjectReference Include="..\ReservingResource.Domain\ReservingResource.Domain.fsproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <DotNetCliToolReference Include="dotnet-fantomas" Version="2.7.1" />
-  </ItemGroup>
-
+  
 </Project>

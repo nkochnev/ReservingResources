@@ -14,10 +14,7 @@ open ReserveResource.Keyboard.SelectResourceKeyboard
 let TokenFileName = "token"
 
 let processMessageBuild config =
-    let defaultText = """⭐️Available commands:
-    /get -     get reserving resource states
-    /reserve - add reserve
-    """
+    let defaultText() = "⭐️Доступные команды для резервирования:" |> appendShowStatesMessage |> appendReserveMessage
 
     let processResultWithValue (result : Result<'a, ApiResponseError>) =
         match result with
@@ -76,7 +73,7 @@ let processMessageBuild config =
             | None -> say "no selected action"
 
         let selectResourceKeyboard freeResources =
-            SelectResourceKeyboard.create config "Что будешь бронировать?"
+            SelectResourceKeyboard.create config "Что будешь резервировать?"
                 (fun (_, date) -> reserve (date)) (freeResources)
             |> showKeyboard
 
@@ -85,6 +82,7 @@ let processMessageBuild config =
             |> tryGetAccountFromContext
             |> Result.map getResourceStates
             |> Result.map resourceStatesToString
+            |> Result.map appendReserveMessage
             |> sayResult
 
         let onReserve() =
@@ -93,6 +91,7 @@ let processMessageBuild config =
             |> Result.map getFreeResourceStates
             |> Result.map selectResourceKeyboard
             |> Result.mapError telegramBotEventsToString
+            |> Result.mapError appendShowStatesMessage
             |> Result.mapError say
             |> ignore
 
@@ -102,7 +101,7 @@ let processMessageBuild config =
 
         let notHandled =
             processCommands ctx (cmds @ InlineKeyboard.getRegisteredHandlers())
-        if notHandled then bot (sendMessage userId defaultText)
+        if notHandled then bot (sendMessage userId (defaultText()))
     updateArrived
 
 let start token =
