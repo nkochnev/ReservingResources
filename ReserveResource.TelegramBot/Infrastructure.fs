@@ -31,7 +31,6 @@ let bindResult2(result: Result<DomainEvents, DomainEvents>) =
     match result with
         | Result.Ok o -> Result.Ok (TelegramBotEvents.DomainEvent o)
         | Result.Error e -> Result.Error (TelegramBotEvents.DomainEvent e)
-
     
 let telegramEventToString =
      function
@@ -53,8 +52,11 @@ let tryGetAccountFromContext ctx =
                             | None _ -> Result.Error (DomainEvent DomainEvents.AccountNotFoundByTelegramUser)
                     | None _ -> Result.Error (TelegramEvent TelegramEvents.TelegramAccountIsEmpty)
 
+let appendBreakLine str = 
+        sprintf "%s%s" str Environment.NewLine
+
 let appendReserveMessage str =
-        sprintf "%s%s%s%s" str Environment.NewLine Environment.NewLine "/reserve - Резервировать ресурс"
+        sprintf "%s%s" str "/reserve - резервировать ресурс"
 
 let appendShowStatesMessage str =
-        sprintf "%s%s%s%s" str Environment.NewLine Environment.NewLine "/get -     Посмотреть состояния резервирования"
+        sprintf "%s%s" str "/status - посмотреть состояния резервирования"

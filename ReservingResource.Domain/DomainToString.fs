@@ -6,17 +6,14 @@ open ReserveResource.Types
 let stringArrayToString collection =
     collection |> String.concat Environment.NewLine
 
+let private fullResourceName resourceType name =
+    sprintf "(%s) %s" resourceType  name
+
 let resourceToString =
     function
-    | VM vm -> "(vm) " + vm.Name
-    | Organization org -> "(org) " + org.Name
-    | Site s -> "(site) " + s.Name
-
-let resourceToName =
-    function
-    | VM vm -> vm.Name
-    | Organization org -> org.Name
-    | Site s -> s.Name
+    | VM vm -> fullResourceName "vm" vm.Name
+    | Organization org -> fullResourceName "org" org.Name
+    | Site s -> fullResourceName "site" s.Name
 
 let resourceToId =
     function
@@ -31,11 +28,9 @@ let resourcesToString resources =
 
 let resourceStateToString =
     function
-    | Free f -> resourceToString f + " free"
-    | Busy b ->
-        resourceToString (b.Resource) + " reserved by @"
-        + b.Account.TelegramLogin + " since from " + b.From.ToString() + " for "
-        + b.ExpiredIn.ToString()
+    | Free f -> sprintf "%s свободен" (resourceToString f) 
+    | Busy b -> sprintf "%s занято @%s \r\nс %s по %s" (resourceToString (b.Resource))
+                    b.Account.TelegramLogin (b.From.ToString()) (b.ExpiredIn.ToString())
 
 let resourceStatesToString states =
     states
@@ -53,9 +48,8 @@ let getMessageFromDomainEvent =
     function
     | AccountNotFoundByTelegramUser _ -> "Пользователь не зарегистрирован"
     | ReserveAdded r ->
-        "Бронирование для " + resourceToString r.Resource + " добавлено"
+        sprintf "Бронирование для %s добавлено до %s" (resourceToString r.Resource) (r.ExpiredIn.ToString())
     | ResourceByIdNotFound id ->
         "Ресурс с идентификатором " + id.ToString() + " не найден"
     | ResourceAlreadyBusy r ->
-        "Нельзя забронировать ресурс " + resourceToString r.Resource
-        + ", т.к. ресурс занят"
+        "Нельзя забронировать ресурс " + resourceToString r.Resource + ", т.к. ресурс занят"

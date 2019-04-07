@@ -10,11 +10,17 @@ open Funogram.Api
 open Funogram.Types
 open Funogram.Keyboard.Inline
 open ReserveResource.Keyboard.SelectResourceKeyboard
+open ReserveResource.Types
 
 let TokenFileName = "token"
 
 let processMessageBuild config =
-    let defaultText() = "⭐️Доступные команды для резервирования:" |> appendShowStatesMessage |> appendReserveMessage
+    let defaultText() =
+        "⭐️Доступные команды для резервирования:"
+        |> appendBreakLine
+        |> appendShowStatesMessage
+        |> appendBreakLine
+        |> appendReserveMessage
 
     let processResultWithValue (result : Result<'a, ApiResponseError>) =
         match result with
@@ -45,11 +51,20 @@ let processMessageBuild config =
             | Ok s -> say s
             | Error e -> say (telegramBotEventsToString e)
 
-        let sayResults (result : Result<TelegramBotEvents, TelegramBotEvents>) =
+        let resultMessage (result : Result<TelegramBotEvents, TelegramBotEvents>) =
             match result with
-            | Ok s -> say (telegramBotEventsToString s)
-            | Error e -> say (telegramBotEventsToString e)
+            | Ok s -> telegramBotEventsToString s
+            | Error e -> telegramBotEventsToString e
+        
+        let sayResults (result : Result<TelegramBotEvents, TelegramBotEvents>) =
+            result |> resultMessage |> say
+            
+        let getStatesResult (states: seq<ResourceState>) =
+            states |> resourceStatesToString |> appendBreakLine |> appendBreakLine |> appendReserveMessage
 
+        let reserveResult (result: Result<DomainEvents,DomainEvents>) =
+            result |> bindResult2 |> resultMessage |> appendBreakLine |> appendBreakLine |> appendShowStatesMessage 
+        
         let reserve (freeResourceSelection : FreeResourceSelection option) =
             match freeResourceSelection with
             | Some f ->
@@ -63,12 +78,10 @@ let processMessageBuild config =
                        | Error e ->
                            Result.Error(TelegramBotEvents.DomainEvent e))
                 |> Result.bind
-                       (fun (account, resource) ->
-                       bindResult
-                           (createAddingReserve account resource f.Period))
+                       (fun (account, resource) -> (createAddingReserve account resource f.Period) |> bindResult )
                 |> Result.map tryAddReserve
-                |> Result.map bindResult2
-                |> Result.map sayResults
+                |> Result.map reserveResult
+                |> Result.map say
                 |> ignore
             | None -> say "no selected action"
 
@@ -81,8 +94,7 @@ let processMessageBuild config =
             ctx
             |> tryGetAccountFromContext
             |> Result.map getResourceStates
-            |> Result.map resourceStatesToString
-            |> Result.map appendReserveMessage
+            |> Result.map getStatesResult
             |> sayResult
 
         let onReserve() =
@@ -91,12 +103,11 @@ let processMessageBuild config =
             |> Result.map getFreeResourceStates
             |> Result.map selectResourceKeyboard
             |> Result.mapError telegramBotEventsToString
-            |> Result.mapError appendShowStatesMessage
             |> Result.mapError say
             |> ignore
 
         let cmds =
-            [ cmd "/get" (fun _ -> onGet())
+            [ cmd "/status" (fun _ -> onGet())
               cmd "/reserve" (fun _ -> onReserve()) ]
 
         let notHandled =
