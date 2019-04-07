@@ -56,16 +56,16 @@ let processMessageBuild config =
          
         let reserve(freeResourceSelection: FreeResourceSelection option) =
             match freeResourceSelection with
-            | Some f -> 
-                        (tryGetAccountFromContext ctx)
+            | Some f -> ctx
+                        |> tryGetAccountFromContext 
                         |> Result.bind (fun account ->
                             let r = getResourceById (account, f.ResourceId)
                             match r with
                                 | Ok o -> Result.Ok (account, o)
                                 | Error e -> Result.Error (TelegramBotEvents.DomainEvent e)
                             )
-                        |> Result.bind (fun (account, resource) -> bindResult (createAddingReserve(account, resource, f.Period)))
-                        |> Result.map (fun addingReserve -> bindResult2 (tryAddReserve(addingReserve)))
+                        |> Result.bind (fun (account, resource) -> bindResult (createAddingReserve account resource f.Period))
+                        |> Result.map tryAddReserve |> Result.map bindResult2
                         |> Result.map sayResults
                         |> ignore
             | None -> say "no selected action"
@@ -74,15 +74,18 @@ let processMessageBuild config =
                                                            (fun (_,date)->reserve(date)) (freeResources)
                                                            |> showKeyboard
             
-        let onGet() = (tryGetAccountFromContext ctx)
+        let onGet() = ctx 
+                      |> tryGetAccountFromContext
                       |> Result.map getResourceStates
                       |> Result.map resourceStatesToString                         
                       |> sayResult        
                 
-        let onReserve() = (tryGetAccountFromContext ctx)
+        let onReserve() = ctx 
+                        |> tryGetAccountFromContext
                         |> Result.map getFreeResourceStates
                         |> Result.map selectResourceKeyboard
-                        |> Result.mapError (fun a->say (telegramBotEventsToString a))
+                        |> Result.mapError telegramBotEventsToString
+                        |> Result.mapError say
                         |> ignore
                         
         let cmds=[

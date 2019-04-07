@@ -1,6 +1,5 @@
 module ReserveResource.Logic
 
-open ReserveResource
 open System
 open ReserveResource.Types
 open ReserveResource.DomainToString
@@ -17,7 +16,7 @@ let getReserves() = db.Reserves
 let getActiveReserves() =
     getReserves() |> List.filter (fun x -> x.Status = ReservingStatus.Active)
 
-let isResourceInTeam(resource: Resource, account: Account) =
+let isResourceInTeam resource account =
     let team =
         match resource with
         | VM  v -> v.Team
@@ -25,14 +24,14 @@ let isResourceInTeam(resource: Resource, account: Account) =
         | Site s -> s.Team
     account.InTeams |> List.contains team        
 
-let toResourceStates(resource: Resource) =
+let toResourceStates resource =
     let lastActiveReserve = getReserves() |> Seq.tryFind (fun r -> r.Resource = resource && r.Status = ReservingStatus.Active)
     match lastActiveReserve with
         | Some r -> Busy r
         | None _ -> Free resource
 
 let getResources(account:Account) = 
-    resources() |> Seq.filter (fun r -> isResourceInTeam(r, account))
+    resources() |> Seq.filter (fun r -> isResourceInTeam r account)
 
 let getResourceById(account:Account, id) = 
     let resource = getResources(account) |> Seq.tryFind (fun r -> (resourceToId r) = id)
@@ -40,7 +39,7 @@ let getResourceById(account:Account, id) =
         | Some r -> Result.Ok r
         | None -> Result.Error (ResourceByIdNotFound id)
     
-let getResourceStates(account:Account) =
+let getResourceStates account =
     getResources(account) |> Seq.map toResourceStates
 
 let isFreeResourceState =
@@ -48,16 +47,16 @@ let isFreeResourceState =
         | Free f -> Some f
         | Busy _ -> None
 
-let getFreeResourceStates(account: Account) =
+let getFreeResourceStates account =
     account |> getResourceStates |> Seq.choose isFreeResourceState
   
-let checkResourceIsFree(resource: Resource) =
+let checkResourceIsFree resource =
     let state = toResourceStates resource
     match state with
         | Busy b -> Result.Error (DomainEvents.ResourceAlreadyBusy b)
         | Free f -> Result.Ok f
     
-let createAddingReserve(account: Account, resource: Resource, period: ReservingPeriod) =
+let createAddingReserve account resource period =
     checkResourceIsFree resource
     |> Result.map (fun freeResource -> {
                         Account = account;

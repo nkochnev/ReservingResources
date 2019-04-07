@@ -4,9 +4,6 @@ module SelectResourceKeyboard =
     open System
     open Funogram.Keyboard.Inline
     open ReserveResource
-    open ReserveResource
-    open ReserveResource
-    open ReserveResource
     open ReserveResource.Types
         
     type FreeResourceType =
@@ -45,7 +42,7 @@ module SelectResourceKeyboard =
                 let id= parts.[1]|> Guid
                 Some {ResourceId = id; Period = period}
     
-    let resourceToState (rr:Resource, period) =
+    let resourceToState rr period =
         Some {ResourceId = (DomainToString.resourceToId rr); Period = period}
         
     let create botCfg text callback (freeResources: seq<FreeResource>): KeyboardDefinition<FreeResourceSelection option>={
@@ -65,7 +62,7 @@ module SelectResourceKeyboard =
                             yield X(DomainToString.resourceToString resource);
                             yield! Logic.allPeriods
                                    |> Seq.map (fun period ->
-                                                      let state = resourceToState(resource, period)
+                                                      let state = resourceToState resource period
                                                       let btnName = (DomainToString.reservingPeriodToString period);
                                                       OK(btnName,state))
                    }

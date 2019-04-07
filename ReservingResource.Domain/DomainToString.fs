@@ -12,8 +12,8 @@ let resourceToString =
                 | Organization org -> "(org) " + org.Name
                 | Site s -> "(site) " + s.Name
 
-let resourceToName(rr: Resource) = 
-        match rr with
+let resourceToName = 
+        function
                 | VM vm-> vm.Name
                 | Organization org -> org.Name
                 | Site s -> s.Name
@@ -24,7 +24,7 @@ let resourceToId =
                 | Organization org -> org.Id
                 | Site s -> s.Id
 
-let resourcesToString(resources: Resource[]) =
+let resourcesToString resources =
         resources |> Seq.map resourceToString |> stringArrayToString
     
 let resourceStateToString = 
@@ -34,8 +34,8 @@ let resourceStateToString =
                             + " since from " + b.From.ToString()
                             + " for " + b.ExpiredIn.ToString()
 
-let resourceStatesToString(rrs: seq<ResourceState>) =
-        rrs |> Seq.map resourceStateToString |> stringArrayToString
+let resourceStatesToString states =
+        states |> Seq.map resourceStateToString |> stringArrayToString
 
 let reservingPeriodToString =
         function

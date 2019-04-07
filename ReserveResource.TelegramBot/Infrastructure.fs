@@ -44,7 +44,7 @@ let telegramBotEventsToString =
         | DomainEvent d -> getMessageFromDomainEvent d
         | TelegramEvent t -> telegramEventToString t
         
-let tryGetAccountFromContext(ctx:UpdateContext) : Result<Account, TelegramBotEvents> =
+let tryGetAccountFromContext ctx =
                 match ctx.Update.Message.Value.From.Value.Username with
                     | Some username ->
                         let account = getAccounts() |> Seq.tryFind (fun u -> u.TelegramLogin = username)
