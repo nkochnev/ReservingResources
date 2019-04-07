@@ -49,7 +49,11 @@ let getMessageFromDomainEvent =
     | AccountNotFoundByTelegramUser _ -> "Пользователь не зарегистрирован"
     | ReserveAdded r ->
         sprintf "Бронирование для %s добавлено до %s" (resourceToString r.Resource) (r.ExpiredIn.ToString())
+    | ResourceReleased r -> sprintf "Ресурс %s освобожден" (resourceToString r.Resource)
     | ResourceByIdNotFound id ->
         "Ресурс с идентификатором " + id.ToString() + " не найден"
     | ResourceAlreadyBusy r ->
         "Нельзя забронировать ресурс " + resourceToString r.Resource + ", т.к. ресурс занят"
+    | ResourceAlreadyFree r ->
+        sprintf "Не могу освободить ресурс, %s т.к. он уже свободен" (resourceToString r)
+    

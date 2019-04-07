@@ -28,8 +28,8 @@ let middleAccount =
 let juniorAccount =
     { Id = Guid.NewGuid()
       Name = "Junior"
-      TelegramLogin = "junior"
-      InTeams = [ hotelTeam ] }
+      TelegramLogin = "fsharpfan"
+      InTeams = [ gCloudTeam; hotelTeam ] }
 
 let accounts() = [ teamLeadAccount; middleAccount; juniorAccount ]
 
@@ -73,21 +73,24 @@ let resources() =
       holyHotelersOrganization ]
 
 let gCloud7777ExpiredReserve =
-    { Account = teamLeadAccount
+    { Id = Guid.NewGuid()
+      Account = teamLeadAccount
       Resource = gCloud7777
       From = now.AddDays(float -10)
       ExpiredIn = now.AddDays(float -1)
       Status = ReservingStatus.Expired }
 
 let gCloud7777ActiveReserve =
-    { Account = teamLeadAccount
+    { Id = Guid.NewGuid()
+      Account = teamLeadAccount
       Resource = gCloud7777
       From = now.AddHours(float -10)
       ExpiredIn = now.AddDays(float 1)
       Status = ReservingStatus.Active }
 
 let gCloud9999ActiveReserve =
-    { Account = middleAccount
+    { Id = Guid.NewGuid()
+      Account = middleAccount
       Resource = gCloud9999
       From = now.AddMinutes(float -1)
       ExpiredIn = now.AddDays(float 7)

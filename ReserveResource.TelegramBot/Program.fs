@@ -4,12 +4,13 @@ open System.IO
 open ReserveResource.DomainToString
 open ReserveResource.Logic
 open ReserveResource.TelegramBotInfrastructure
-open ReserveResource.Keyboard
 open Funogram.Bot
 open Funogram.Api
 open Funogram.Types
 open Funogram.Keyboard.Inline
-open ReserveResource.Keyboard.SelectResourceKeyboard
+open ReserveResource.Keyboard
+open ReserveResource.Keyboard.SelectFreeResourceKeyboard
+open ReserveResource.Keyboard.SelectReservedResourceKeyboard
 open ReserveResource.Types
 
 let TokenFileName = "token"
@@ -21,6 +22,8 @@ let processMessageBuild config =
         |> appendShowStatesMessage
         |> appendBreakLine
         |> appendReserveMessage
+        |> appendBreakLine
+        |> appengReleaseMessage
 
     let processResultWithValue (result : Result<'a, ApiResponseError>) =
         match result with
@@ -63,33 +66,53 @@ let processMessageBuild config =
             states |> resourceStatesToString |> appendBreakLine |> appendBreakLine |> appendReserveMessage
 
         let reserveResult (result: Result<DomainEvents,DomainEvents>) =
-            result |> bindResult2 |> resultMessage |> appendBreakLine |> appendBreakLine |> appendShowStatesMessage 
+            result |> bindResult2 |> resultMessage |> appendBreakLine |> appendBreakLine |> appendShowStatesMessage
+            
+        let releaseResult (result: Result<DomainEvents,DomainEvents>) =
+            result |> bindResult2 |> resultMessage |> appendBreakLine |> appendBreakLine |> appendShowStatesMessage
         
-        let reserve (freeResourceSelection : FreeResourceSelection option) =
-            match freeResourceSelection with
-            | Some f ->
+        let reserve (resourceSelection : FreeResourceSelection option) =
+            match resourceSelection with
+            | Some r ->
                 ctx
                 |> tryGetAccountFromContext
                 |> Result.bind
                        (fun account ->
-                       let r = getResourceById (account, f.ResourceId)
+                       let r = getResourceById (account, r.ResourceId)
                        match r with
                        | Ok o -> Result.Ok(account, o)
                        | Error e ->
                            Result.Error(TelegramBotEvents.DomainEvent e))
                 |> Result.bind
-                       (fun (account, resource) -> (createAddingReserve account resource f.Period) |> bindResult )
+                       (fun (account, resource) -> (createAddingReserve account resource r.Period) |> bindResult )
                 |> Result.map tryAddReserve
                 |> Result.map reserveResult
                 |> Result.map say
                 |> ignore
             | None -> say "no selected action"
-
-        let selectResourceKeyboard freeResources =
-            SelectResourceKeyboard.create config "Что будешь резервировать?"
-                (fun (_, date) -> reserve (date)) (freeResources)
+        
+        let release (resourceSelection : ReservedResourceSelection option) =
+            match resourceSelection with
+            | Some r ->
+                ctx
+                |> tryGetAccountFromContext
+                |> Result.bind (fun account -> getResourceById(account, r.ResourceId) |> bindResult)
+                |> Result.map releaseResource
+                |> Result.map releaseResult
+                |> Result.map say
+                |> ignore
+            | None -> say "no selected action"
+        
+        let selectFreeResourceKeyboard freeResources =
+            SelectFreeResourceKeyboard.create config "Что будешь резервировать?"
+                (fun (_, selection) -> reserve (selection)) (freeResources)
             |> showKeyboard
 
+        let selectReservedResourceKeyboard reservedResources =
+            SelectReservedResourceKeyboard.create config "Что будем освобождать?"
+                (fun (_, selection) -> release (selection)) (reservedResources)
+            |> showKeyboard
+        
         let onGet() =
             ctx
             |> tryGetAccountFromContext
@@ -101,14 +124,25 @@ let processMessageBuild config =
             ctx
             |> tryGetAccountFromContext
             |> Result.map getFreeResourceStates
-            |> Result.map selectResourceKeyboard
+            |> Result.map selectFreeResourceKeyboard
             |> Result.mapError telegramBotEventsToString
             |> Result.mapError say
             |> ignore
+        
+        let onRelease() =
+            ctx
+            |> tryGetAccountFromContext
+            |> Result.map getReservedResoures
+            |> Result.map selectReservedResourceKeyboard
+            |> Result.mapError telegramBotEventsToString
+            |> Result.mapError say
+            |> ignore    
 
         let cmds =
             [ cmd "/status" (fun _ -> onGet())
-              cmd "/reserve" (fun _ -> onReserve()) ]
+              cmd "/reserve" (fun _ -> onReserve())
+              cmd "/release" (fun _ -> onRelease())
+               ]
 
         let notHandled =
             processCommands ctx (cmds @ InlineKeyboard.getRegisteredHandlers())

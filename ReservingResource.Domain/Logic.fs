@@ -1,6 +1,7 @@
 module ReserveResource.Logic
 
 open System
+open System
 open ReserveResource.Types
 open ReserveResource.DomainToString
 open ReserveResource.HardCode
@@ -50,11 +51,27 @@ let isFreeResourceState =
     function
     | Free f -> Some f
     | Busy _ -> None
+    
+let isReservedByAccountResourceState account =
+    function
+    | Free f -> None
+    | Busy b ->
+        if (b.Account = account)
+        then
+            Some b
+        else
+            None
 
 let getFreeResourceStates account =
     account
     |> getResourceStates
     |> Seq.choose isFreeResourceState
+    
+let getReservedResoures account =
+    account
+    |> getResourceStates
+    |> Seq.choose (account |> isReservedByAccountResourceState)
+    |> Seq.map (fun a -> a.Resource)
 
 let checkResourceIsFree resource =
     let state = toResourceStates resource
@@ -81,7 +98,8 @@ let allPeriods =
       ReservingPeriod.ForDay; ReservingPeriod.For3Days ]
 
 let mapToReserve (addingReserve : AddingReserve) =
-    { Account = addingReserve.Account
+    { Id = Guid.NewGuid()
+      Account = addingReserve.Account
       Resource = addingReserve.Resource
       From = DateTime.Now
       Status = ReservingStatus.Active
@@ -90,11 +108,23 @@ let mapToReserve (addingReserve : AddingReserve) =
           |> getHoursFromReservingPeriod
           |> DateTime.Now.AddHours }
 
+let changeReserveInDb (reserve:Reserve) =
+    let newReserves = db.Reserves |> Seq.map (fun r -> if r.Id = reserve.Id then reserve else r) |> Seq.toList
+    db <- { db with Reserves = newReserves }
+
 let addReserveToDb reserve =
-    let tmp = db.Reserves
-    db <- { db with Reserves = tmp @ [ reserve ] }
+    db <- { db with Reserves = (db.Reserves) @ [ reserve ] }
 
 let tryAddReserve (addingReserve : AddingReserve) : Result<DomainEvents, DomainEvents> =
     let reserve = mapToReserve addingReserve
     addReserveToDb reserve
     Result.Ok(DomainEvents.ReserveAdded reserve)
+
+let releaseResource resource =
+    let state = toResourceStates resource
+    match state with
+        | Free f -> Result.Error (DomainEvents.ResourceAlreadyFree f)
+        | Busy b ->
+            let newReserve = {b with Status = ReservingStatus.Expired}
+            changeReserveInDb newReserve
+            Result.Ok (DomainEvents.ResourceReleased newReserve)

@@ -17,9 +17,7 @@ type TelegramEvents =
 type TelegramBotEvents = 
     | DomainEvent of DomainEvents
     | TelegramEvent of TelegramEvents
-    
-type ReserveState = { Type:string; Id: Guid }
-    
+   
 // functions
 
 let bindResult(result: Result<'a, DomainEvents>) =    
@@ -55,8 +53,11 @@ let tryGetAccountFromContext ctx =
 let appendBreakLine str = 
         sprintf "%s%s" str Environment.NewLine
 
+let appendShowStatesMessage str =
+        sprintf "%s%s" str "/status - посмотреть состояния резервирования"
+        
 let appendReserveMessage str =
         sprintf "%s%s" str "/reserve - резервировать ресурс"
 
-let appendShowStatesMessage str =
-        sprintf "%s%s" str "/status - посмотреть состояния резервирования"
+let appengReleaseMessage str =
+        sprintf "%s%s" str "/release - освободить ресурс"

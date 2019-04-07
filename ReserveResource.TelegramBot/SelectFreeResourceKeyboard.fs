@@ -1,20 +1,16 @@
 namespace ReserveResource.Keyboard
 
-module SelectResourceKeyboard =
+module SelectFreeResourceKeyboard =
     open System
     open Funogram.Keyboard.Inline
     open ReserveResource
+    open ReserveResource.TelegramBotInfrastructure
     open ReserveResource.Types
-
-    type FreeResourceType =
-        | VM
-        | Organization
-        | Site
-
+    
     type FreeResourceSelection =
         { ResourceId : Guid
           Period : ReservingPeriod }
-
+    
     let deserializeReservingPeriod =
         function
         | 2 -> For2Hours
@@ -38,12 +34,10 @@ module SelectResourceKeyboard =
 
     let private strToFreeResourceSelection (s : string) =
         let parts = s.Split [| ';' |]
-
         let period =
             parts.[0]
             |> int
             |> deserializeReservingPeriod
-
         let id = parts.[1] |> Guid
         Some { ResourceId = id
                Period = period }
@@ -52,7 +46,7 @@ module SelectResourceKeyboard =
         Some { ResourceId = (DomainToString.resourceToId rr)
                Period = period }
 
-    let create botCfg text callback (freeResources : seq<FreeResource>) : KeyboardDefinition<FreeResourceSelection option> =
+    let create botCfg text callback (freeResources : seq<Resource>) : KeyboardDefinition<FreeResourceSelection option> =
         { Id = "CONFIRM"
           DisableNotification = false
           HideAfterConfirm = true

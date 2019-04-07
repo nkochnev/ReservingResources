@@ -52,7 +52,8 @@ type AddingReserve =
       ReservingPeriod : ReservingPeriod }
 
 type Reserve =
-    { Account : Account
+    { Id : Guid
+      Account : Account
       Resource : Resource
       From : DateTime
       ExpiredIn : DateTime
@@ -69,6 +70,8 @@ type DomainEvents =
     //errors
     | AccountNotFoundByTelegramUser
     | ResourceAlreadyBusy of Reserve
+    | ResourceAlreadyFree of FreeResource
     | ResourceByIdNotFound of Guid
     //events
     | ReserveAdded of Reserve
+    | ResourceReleased of Reserve
