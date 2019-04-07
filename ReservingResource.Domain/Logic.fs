@@ -5,89 +5,96 @@ open ReserveResource.Types
 open ReserveResource.DomainToString
 open ReserveResource.HardCode
 
-let mutable db = {Reserves = [gCloud7777ExpiredReserve; gCloud7777ActiveReserve; gCloud9999ActiveReserve]}
-
-let getAccounts() = [teamLeadAccount;middleAccount;juniorAccount]
-
-let getTeams() = [gCloudTeam]
-
+let mutable db =
+    { Reserves =
+          [ gCloud7777ExpiredReserve; gCloud7777ActiveReserve;
+            gCloud9999ActiveReserve ] }
+let getAccounts() = [ teamLeadAccount; middleAccount; juniorAccount ]
+let getTeams() = [ gCloudTeam ]
 let getReserves() = db.Reserves
-
 let getActiveReserves() =
     getReserves() |> List.filter (fun x -> x.Status = ReservingStatus.Active)
 
 let isResourceInTeam resource account =
     let team =
         match resource with
-        | VM  v -> v.Team
+        | VM v -> v.Team
         | Organization o -> o.Team
         | Site s -> s.Team
-    account.InTeams |> List.contains team        
+    account.InTeams |> List.contains team
 
 let toResourceStates resource =
-    let lastActiveReserve = getReserves() |> Seq.tryFind (fun r -> r.Resource = resource && r.Status = ReservingStatus.Active)
+    let lastActiveReserve =
+        getReserves()
+        |> Seq.tryFind
+               (fun r ->
+               r.Resource = resource && r.Status = ReservingStatus.Active)
     match lastActiveReserve with
-        | Some r -> Busy r
-        | None _ -> Free resource
+    | Some r -> Busy r
+    | None _ -> Free resource
 
-let getResources(account:Account) = 
+let getResources (account : Account) =
     resources() |> Seq.filter (fun r -> isResourceInTeam r account)
 
-let getResourceById(account:Account, id) = 
-    let resource = getResources(account) |> Seq.tryFind (fun r -> (resourceToId r) = id)
+let getResourceById (account : Account, id) =
+    let resource =
+        getResources (account) |> Seq.tryFind (fun r -> (resourceToId r) = id)
     match resource with
-        | Some r -> Result.Ok r
-        | None -> Result.Error (ResourceByIdNotFound id)
-    
+    | Some r -> Result.Ok r
+    | None -> Result.Error(ResourceByIdNotFound id)
+
 let getResourceStates account =
-    getResources(account) |> Seq.map toResourceStates
+    getResources (account) |> Seq.map toResourceStates
 
 let isFreeResourceState =
     function
-        | Free f -> Some f
-        | Busy _ -> None
+    | Free f -> Some f
+    | Busy _ -> None
 
 let getFreeResourceStates account =
-    account |> getResourceStates |> Seq.choose isFreeResourceState
-  
+    account
+    |> getResourceStates
+    |> Seq.choose isFreeResourceState
+
 let checkResourceIsFree resource =
     let state = toResourceStates resource
     match state with
-        | Busy b -> Result.Error (DomainEvents.ResourceAlreadyBusy b)
-        | Free f -> Result.Ok f
-    
+    | Busy b -> Result.Error(DomainEvents.ResourceAlreadyBusy b)
+    | Free f -> Result.Ok f
+
 let createAddingReserve account resource period =
     checkResourceIsFree resource
-    |> Result.map (fun freeResource -> {
-                        Account = account;
-                        Resource = freeResource;
-                        ReservingPeriod = period
-                    })
+    |> Result.map (fun freeResource ->
+           { Account = account
+             Resource = freeResource
+             ReservingPeriod = period })
 
 let getHoursFromReservingPeriod =
     function
-        | For2Hours _ -> float 2
-        | For6Hours _ -> float 6
-        | ForDay _ -> float 24
-        | For3Days _ -> float (24*3)
+    | For2Hours _ -> float 2
+    | For6Hours _ -> float 6
+    | ForDay _ -> float 24
+    | For3Days _ -> float (24 * 3)
 
 let allPeriods =
-    [ReservingPeriod.For2Hours; ReservingPeriod.For6Hours; ReservingPeriod.ForDay; ReservingPeriod.For3Days]
+    [ ReservingPeriod.For2Hours; ReservingPeriod.For6Hours;
+      ReservingPeriod.ForDay; ReservingPeriod.For3Days ]
 
-let mapToReserve(addingReserve: AddingReserve) =
-    {
-        Account = addingReserve.Account
-        Resource = addingReserve.Resource
-        From = DateTime.Now
-        Status = ReservingStatus.Active
-        ExpiredIn = addingReserve.ReservingPeriod |> getHoursFromReservingPeriod |> DateTime.Now.AddHours 
-    }
+let mapToReserve (addingReserve : AddingReserve) =
+    { Account = addingReserve.Account
+      Resource = addingReserve.Resource
+      From = DateTime.Now
+      Status = ReservingStatus.Active
+      ExpiredIn =
+          addingReserve.ReservingPeriod
+          |> getHoursFromReservingPeriod
+          |> DateTime.Now.AddHours }
 
 let addReserveToDb reserve =
-    let tmp = db.Reserves;
-    db <- {db with Reserves = tmp @ [reserve]}
-    
-let tryAddReserve(addingReserve: AddingReserve) : Result<DomainEvents, DomainEvents> =    
+    let tmp = db.Reserves
+    db <- { db with Reserves = tmp @ [ reserve ] }
+
+let tryAddReserve (addingReserve : AddingReserve) : Result<DomainEvents, DomainEvents> =
     let reserve = mapToReserve addingReserve
     addReserveToDb reserve
-    Result.Ok (DomainEvents.ReserveAdded reserve)
+    Result.Ok(DomainEvents.ReserveAdded reserve)
