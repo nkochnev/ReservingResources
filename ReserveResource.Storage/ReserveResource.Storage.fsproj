@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Context.fs" />
+        <Compile Include="Queries.fs" />
+        <Compile Include="Mappers.fs" />
+        <Compile Include="Database.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="SQLProvider" Version="1.1.62" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ReservingResource.Domain\ReservingResource.Domain.fsproj" />
+    </ItemGroup>
+
+</Project>

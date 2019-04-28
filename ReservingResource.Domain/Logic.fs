@@ -1,90 +1,32 @@
 module ReserveResource.Logic
 
 open System
-open System
 open ReserveResource.Types
 open ReserveResource.DomainToString
-open ReserveResource.HardCode
 
-let mutable db =
-    { Reserves =
-          [ gCloud7777ExpiredReserve; gCloud7777ActiveReserve;
-            gCloud9999ActiveReserve ] }
-let getAccounts() = [ teamLeadAccount; middleAccount; juniorAccount ]
-let getTeams() = [ gCloudTeam ]
-let getReserves() = db.Reserves
-let getActiveReserves() =
-    getReserves() |> List.filter (fun x -> x.Status = ReservingStatus.Active)
+let allPeriods =
+    [ ReservingPeriod.For2Hours; ReservingPeriod.For6Hours;
+      ReservingPeriod.ForDay; ReservingPeriod.For3Days ]
 
-let isResourceInTeam resource account =
-    let team =
-        match resource with
+let getTeam =
+    function 
         | VM v -> v.Team
         | Organization o -> o.Team
         | Site s -> s.Team
-    account.InTeams |> List.contains team
 
-let toResourceStates resource =
-    let lastActiveReserve =
-        getReserves()
-        |> Seq.tryFind
-               (fun r ->
-               r.Resource = resource && r.Status = ReservingStatus.Active)
-    match lastActiveReserve with
-    | Some r -> Busy r
-    | None _ -> Free resource
+let getResourceActiveBooking (resource: Resource, bookings: ActiveBooking list) = 
+    bookings |> Seq.filter (fun b -> b.Resource = resource) |> Seq.tryExactlyOne
 
-let getResources (account : Account) =
-    resources() |> Seq.filter (fun r -> isResourceInTeam r account)
+let toResourceState (resource, activeBooking) = 
+    match activeBooking with 
+        | Some b -> Busy (resource, b)
+        | None _ -> Free resource
 
-let getResourceById (account : Account, id) =
-    let resource =
-        getResources (account) |> Seq.tryFind (fun r -> (resourceToId r) = id)
-    match resource with
-    | Some r -> Result.Ok r
-    | None -> Result.Error(ResourceByIdNotFound id)
-
-let getResourceStates account =
-    getResources (account) |> Seq.map toResourceStates
-
-let isFreeResourceState =
-    function
-    | Free f -> Some f
-    | Busy _ -> None
-    
-let isReservedByAccountResourceState account =
-    function
-    | Free f -> None
-    | Busy b ->
-        if (b.Account = account)
-        then
-            Some b
-        else
-            None
-
-let getFreeResourceStates account =
-    account
-    |> getResourceStates
-    |> Seq.choose isFreeResourceState
-    
-let getReservedResoures account =
-    account
-    |> getResourceStates
-    |> Seq.choose (account |> isReservedByAccountResourceState)
-    |> Seq.map (fun a -> a.Resource)
-
-let checkResourceIsFree resource =
-    let state = toResourceStates resource
-    match state with
-    | Busy b -> Result.Error(DomainEvents.ResourceAlreadyBusy b)
-    | Free f -> Result.Ok f
-
-let createAddingReserve account resource period =
-    checkResourceIsFree resource
-    |> Result.map (fun freeResource ->
-           { Account = account
-             Resource = freeResource
-             ReservingPeriod = period })
+let getResourceStates(resources: Resource list, bookings: ActiveBooking list) : ResourceState list = 
+    resources 
+    |> Seq.map (fun r -> (r,getResourceActiveBooking(r, bookings)))
+    |> Seq.map (fun (r, ab) -> toResourceState(r, ab))
+    |> Seq.toList
 
 let getHoursFromReservingPeriod =
     function
@@ -93,38 +35,51 @@ let getHoursFromReservingPeriod =
     | ForDay _ -> float 24
     | For3Days _ -> float (24 * 3)
 
-let allPeriods =
-    [ ReservingPeriod.For2Hours; ReservingPeriod.For6Hours;
-      ReservingPeriod.ForDay; ReservingPeriod.For3Days ]
+let reservingResource(account: Account, resource: FreeResourceState, reservingPeriod: ReservingPeriod) = 
+    let activeBooking = {   Id = Guid.NewGuid()
+                            Account = account
+                            Resource = resource
+                            From = DateTime.Now
+                            ExpiredIn = reservingPeriod
+                                      |> getHoursFromReservingPeriod
+                                      |> DateTime.Now.AddHours}
+    Result.Ok (BookingAdded(resource, activeBooking))
 
-let mapToReserve (addingReserve : AddingReserve) =
-    { Id = Guid.NewGuid()
-      Account = addingReserve.Account
-      Resource = addingReserve.Resource
-      From = DateTime.Now
-      Status = ReservingStatus.Active
-      ExpiredIn =
-          addingReserve.ReservingPeriod
-          |> getHoursFromReservingPeriod
-          |> DateTime.Now.AddHours }
+let releasingResource(busy: BusyResourceState) = 
+    let (resource, booking) = busy
+    Result.Ok (ResourceReleased ((booking, DateTime.Now)))
+// filtering
 
-let changeReserveInDb (reserve:Reserve) =
-    let newReserves = db.Reserves |> Seq.map (fun r -> if r.Id = reserve.Id then reserve else r) |> Seq.toList
-    db <- { db with Reserves = newReserves }
+let isFreeAndEqualId(state, id) = 
+    match state with 
+        | Free f -> ((resourceToId f) = id)
+        | Busy _ -> false
 
-let addReserveToDb reserve =
-    db <- { db with Reserves = (db.Reserves) @ [ reserve ] }
+let filterFreeStateOnly(states) = 
+    states |> Seq.choose (fun s -> match s with 
+                                    | Free f -> Some f
+                                    | Busy _ -> None)
 
-let tryAddReserve (addingReserve : AddingReserve) : Result<DomainEvents, DomainEvents> =
-    let reserve = mapToReserve addingReserve
-    addReserveToDb reserve
-    Result.Ok(DomainEvents.ReserveAdded reserve)
+                                    
+let filterBusyStateOnly(states) = 
+    states |> Seq.choose (fun s -> match s with 
+                                    | Free _ -> None
+                                    | Busy b -> Some b)
 
-let releaseResource resource =
-    let state = toResourceStates resource
-    match state with
-        | Free f -> Result.Error (DomainEvents.ResourceAlreadyFree f)
-        | Busy b ->
-            let newReserve = {b with Status = ReservingStatus.Expired}
-            changeReserveInDb newReserve
-            Result.Ok (DomainEvents.ResourceReleased newReserve)
+let getFreeResourceById(states, id) : Result<FreeResourceState, DomainEvents> = 
+    states 
+    |> filterFreeStateOnly 
+    |> Seq.filter (fun freeState -> (resourceToId freeState) = id)
+    |> Seq.tryExactlyOne
+    |> function 
+        | Some r -> Result.Ok r
+        | None _ -> Result.Error (ResourceByIdNotFound id)
+
+let getBusyResourceById(states, id) : Result<BusyResourceState, DomainEvents> = 
+    states 
+    |> filterBusyStateOnly 
+    |> Seq.filter (fun (resource, booking) -> (resourceToId resource) = id)
+    |> Seq.tryExactlyOne
+    |> function 
+        | Some busyResourceState -> Result.Ok busyResourceState
+        | None _ -> Result.Error (ResourceByIdNotFound id)

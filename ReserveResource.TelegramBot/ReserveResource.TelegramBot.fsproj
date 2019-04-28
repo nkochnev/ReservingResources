@@ -16,11 +16,14 @@
 
   <ItemGroup>
     <PackageReference Include="Funogram" Version="1.3.0" />
-    <PackageReference Include="Funogram.Keyboard" Version="1.3.0" />
+    <PackageReference Include="Funogram.Keyboard" Version="1.3.1" />
+    <PackageReference Include="SQLProvider" Version="1.1.62" />
+    <PackageReference Include="System.Linq" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ReservingResource.Domain\ReservingResource.Domain.fsproj" />
+    <ProjectReference Include="..\ReserveResource.Storage\ReserveResource.Storage.fsproj" />
   </ItemGroup>
   
 </Project>

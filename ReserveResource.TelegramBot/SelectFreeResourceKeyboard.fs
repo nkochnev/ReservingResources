@@ -54,7 +54,7 @@ module SelectFreeResourceKeyboard =
           GetMessageText = fun _ -> text
           Serialize = freeResourceSelectionToStr
           GetKeysByState =
-              fun keys selected ->
+              fun keys _ ->
                   let X = keys.Ignore
                   let B = keys.Change
                   let OK = keys.Confirm

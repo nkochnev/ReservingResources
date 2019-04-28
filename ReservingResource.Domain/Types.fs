@@ -9,8 +9,7 @@ type Team =
 type Account =
     { Id : Guid
       Name : string
-      TelegramLogin : string
-      InTeams : Team list }
+      TelegramLogin : string}
 
 type VirtualMachine =
     { Id : Guid
@@ -34,11 +33,22 @@ type Resource =
     | Organization of Organization
     | Site of Site
 
-type FreeResource = Resource
+type ActiveBooking = {
+      Id : Guid
+      Account : Account
+      Resource : Resource
+      From : DateTime
+      ExpiredIn : DateTime
+}
 
-type ReservingStatus =
-    | Active = 1
-    | Expired = 2
+type ReleasedBooking = ActiveBooking * DateTime
+
+type FreeResourceState = Resource
+type BusyResourceState = Resource * ActiveBooking
+
+type ResourceState =
+    | Free of FreeResourceState
+    | Busy of BusyResourceState
 
 type ReservingPeriod =
     | For2Hours
@@ -46,32 +56,12 @@ type ReservingPeriod =
     | ForDay
     | For3Days
 
-type AddingReserve =
-    { Account : Account
-      Resource : FreeResource
-      ReservingPeriod : ReservingPeriod }
-
-type Reserve =
-    { Id : Guid
-      Account : Account
-      Resource : Resource
-      From : DateTime
-      ExpiredIn : DateTime
-      Status : ReservingStatus }
-
-type DbContext =
-    { mutable Reserves : Reserve list }
-
-type ResourceState =
-    | Free of FreeResource
-    | Busy of Reserve
-
 type DomainEvents =
     //errors
     | AccountNotFoundByTelegramUser
-    | ResourceAlreadyBusy of Reserve
-    | ResourceAlreadyFree of FreeResource
+    | ResourceAlreadyBusy of ActiveBooking
+    | ResourceAlreadyFree of Resource
     | ResourceByIdNotFound of Guid
     //events
-    | ReserveAdded of Reserve
-    | ResourceReleased of Reserve
+    | BookingAdded of BusyResourceState
+    | ResourceReleased of ReleasedBooking

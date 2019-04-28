@@ -7,7 +7,6 @@
     <ItemGroup>
         <Compile Include="Types.fs" />
         <Compile Include="DomainToString.fs" />
-        <Compile Include="HardCode.fs" />
         <Compile Include="Logic.fs" />
     </ItemGroup>
 
