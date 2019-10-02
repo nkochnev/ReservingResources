@@ -1,4 +1,4 @@
-module ReserveResource.Types
+module ReserveBot.Types
 
 open System
 

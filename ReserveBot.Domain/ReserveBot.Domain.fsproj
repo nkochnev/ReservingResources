@@ -2,6 +2,12 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
+        <AssemblyName>ReserveBot.Domain</AssemblyName>
+        <RootNamespace>ReserveBot.Domain</RootNamespace>
+        <PackageId>ReserveBot.Domain</PackageId>
+        <Authors>ReserveBot.Domain</Authors>
+        <Company>ReserveBot.Domain</Company>
+        <Product>ReserveBot.Domain</Product>
     </PropertyGroup>
 
     <ItemGroup>

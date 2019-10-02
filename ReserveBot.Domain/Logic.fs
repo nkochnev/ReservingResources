@@ -1,8 +1,8 @@
-module ReserveResource.Logic
+module ReserveBot.Logic
 
 open System
-open ReserveResource.Types
-open ReserveResource.DomainToString
+open ReserveBot.Types
+open ReserveBot.DomainToString
 
 let allPeriods =
     [ ReservingPeriod.For2Hours; ReservingPeriod.For6Hours;
@@ -15,7 +15,7 @@ let getTeam =
         | Site s -> s.Team
 
 let getResourceActiveBooking (resource: Resource, bookings: ActiveBooking list) = 
-    bookings |> Seq.filter (fun b -> b.Resource = resource) |> Seq.tryExactlyOne
+    bookings |> Seq.filter (fun b -> b.Resource = resource) |> Seq.tryHead
 
 let toResourceState (resource, activeBooking) = 
     match activeBooking with 
@@ -35,7 +35,7 @@ let getHoursFromReservingPeriod =
     | ForDay _ -> float 24
     | For3Days _ -> float (24 * 3)
 
-let reservingResource(account: Account, resource: FreeResourceState, reservingPeriod: ReservingPeriod) = 
+let reserveResource(account: Account, resource: FreeResourceState, reservingPeriod: ReservingPeriod) = 
     let activeBooking = {   Id = Guid.NewGuid()
                             Account = account
                             Resource = resource
@@ -48,6 +48,8 @@ let reservingResource(account: Account, resource: FreeResourceState, reservingPe
 let releasingResource(busy: BusyResourceState) = 
     let (resource, booking) = busy
     Result.Ok (ResourceReleased ((booking, DateTime.Now)))
+    
+    
 // filtering
 
 let isFreeAndEqualId(state, id) = 
@@ -70,7 +72,7 @@ let getFreeResourceById(states, id) : Result<FreeResourceState, DomainEvents> =
     states 
     |> filterFreeStateOnly 
     |> Seq.filter (fun freeState -> (resourceToId freeState) = id)
-    |> Seq.tryExactlyOne
+    |> Seq.tryHead
     |> function 
         | Some r -> Result.Ok r
         | None _ -> Result.Error (ResourceByIdNotFound id)
@@ -79,7 +81,7 @@ let getBusyResourceById(states, id) : Result<BusyResourceState, DomainEvents> =
     states 
     |> filterBusyStateOnly 
     |> Seq.filter (fun (resource, booking) -> (resourceToId resource) = id)
-    |> Seq.tryExactlyOne
+    |> Seq.tryHead
     |> function 
         | Some busyResourceState -> Result.Ok busyResourceState
         | None _ -> Result.Error (ResourceByIdNotFound id)

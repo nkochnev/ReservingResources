@@ -3,9 +3,9 @@ namespace ReserveResource.Keyboard
 module SelectFreeResourceKeyboard =
     open System
     open Funogram.Keyboard.Inline
-    open ReserveResource
-    open ReserveResource.TelegramBotInfrastructure
-    open ReserveResource.Types
+    open ReserveBot.Types
+    open ReserveBot.Logic
+    open ReserveBot.DomainToString
     
     type FreeResourceSelection =
         { ResourceId : Guid
@@ -43,7 +43,7 @@ module SelectFreeResourceKeyboard =
                Period = period }
 
     let resourceToState rr period =
-        Some { ResourceId = (DomainToString.resourceToId rr)
+        Some { ResourceId = (resourceToId rr)
                Period = period }
 
     let create botCfg text callback (freeResources : seq<Resource>) : KeyboardDefinition<FreeResourceSelection option> =
@@ -60,13 +60,13 @@ module SelectFreeResourceKeyboard =
                   let OK = keys.Confirm
                   keys {
                       for resource in freeResources |> Seq.toList do
-                          yield X(DomainToString.resourceToString resource)
-                          yield! Logic.allPeriods
+                          yield X(resourceToString resource)
+                          yield! allPeriods
                                  |> Seq.map (fun period ->
                                         let state =
                                             resourceToState resource period
                                         let btnName =
-                                            (DomainToString.reservingPeriodToString
+                                            (reservingPeriodToString
                                                  period)
                                         OK(btnName, state))
                   }

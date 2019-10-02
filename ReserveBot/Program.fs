@@ -1,21 +1,20 @@
 ﻿module ReserveResource.TelegramBot
 
 open System.IO
-open ReserveResource.DomainToString
-open ReserveResource.Logic
-open ReserveResource.TelegramBotInfrastructure
+open TelegramBotInfrastructure
+open ReserveBot.Types
+open ReserveBot.DomainToString
+open ReserveBot.Logic
+open ReserveResource.Database.Database
 open Funogram.Bot
 open Funogram.Api
 open Funogram.Types
 open Funogram.Keyboard.Inline
-open ReserveResource.Types
-open ReserveResource.Storage.Context
-open ReserveResource.Storage.Database
-open ReserveResource.Keyboard.SelectFreeResourceKeyboard
-open ReserveResource.Keyboard.SelectReservedResourceKeyboard
 open ReserveResource.Keyboard
-open FSharp.Data.Sql.Transactions
-open System
+open ReserveBot.Storage
+open SelectFreeResourceKeyboard
+open SelectReservedResourceKeyboard
+open Microsoft.EntityFrameworkCore
 
 let TokenFileName = "token"
 
@@ -47,8 +46,7 @@ let processMessageBuild config =
                 tctx.Update.Message.Value.From.Value.Id
             else tctx.Update.CallbackQuery.Value.From.Id
         
-        let op = {Timeout = TimeSpan.MaxValue ; IsolationLevel = IsolationLevel.DontCreateTransaction}
-        let dctx = sql.GetDataContext(op)
+        let dctx = new ReserveBotContext()
 
         let sendMessageFormatted text parseMode =
             (sendMessageBase (ChatId.Int(userId)) text (Some parseMode) None
@@ -94,7 +92,7 @@ let processMessageBuild config =
                 |> Result.bind (fun (account, states) -> getFreeResourceById(states, r.ResourceId) 
                                                         |> bindResult 
                                                         |> Result.map (fun freeResource -> (account, freeResource)))
-                |> Result.map (fun (account, freeResource) -> reservingResource(account, freeResource, r.Period))                
+                |> Result.map (fun (account, freeResource) -> reserveResource(account, freeResource, r.Period))                
                 |> Result.map reserveResult
                 |> ignore
             | None -> say "no selected action"
@@ -159,6 +157,11 @@ let start token =
 [<EntryPoint>]
 let main argv =
     printfn "Bot started..."
+    
+    let dctx = new ReserveBotContext()
+    dctx.Database.Migrate();
+    dctx.Dispose();
+    
     let startBot =
         if File.Exists(TokenFileName) then
             start (File.ReadAllText(TokenFileName))

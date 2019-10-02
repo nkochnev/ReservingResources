@@ -3,10 +3,9 @@ module ReserveResource.TelegramBotInfrastructure
 open System
 open Funogram.Bot
 open Funogram.Types
-open ReserveResource.Types
-open ReserveResource.DomainToString
-open ReserveResource.Storage.Database
-open FSharp.Data.Sql
+open ReserveResource.Database.Database
+open ReserveBot.Types
+open ReserveBot.DomainToString
 
 // types
 

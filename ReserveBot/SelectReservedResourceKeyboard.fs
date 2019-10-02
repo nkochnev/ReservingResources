@@ -1,11 +1,12 @@
 namespace ReserveResource.Keyboard
+open ReserveBot
 
 module SelectReservedResourceKeyboard =
     open System
     open Funogram.Keyboard.Inline
-    open ReserveResource
-    open ReserveResource.TelegramBotInfrastructure
-    open ReserveResource.Types
+    open DomainToString
+    open Types
+    
 
     type ReservedResourceSelection =
         { ResourceId : Guid }
@@ -20,7 +21,7 @@ module SelectReservedResourceKeyboard =
         Some {ResourceId = s |> Guid}
 
     let resourceToState resource =
-        Some { ResourceId = (DomainToString.resourceToId resource)}
+        Some { ResourceId = (resourceToId resource)}
 
     let create botCfg text callback (freeResources : seq<Resource>) : KeyboardDefinition<ReservedResourceSelection option> =
         { Id = "CONFIRM"

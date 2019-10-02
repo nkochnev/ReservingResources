@@ -1,0 +1,6 @@
+из корня проекта:
+добавление миграций
+dotnet ef migrations add initMigration --project "BookingBot.Storage" --startup-project "BookingBot"
+
+обновление БД
+dotnet ef database update --project "BookingBot.Storage" --startup-project "BookingBot"

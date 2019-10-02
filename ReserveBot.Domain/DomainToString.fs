@@ -1,7 +1,7 @@
-module ReserveResource.DomainToString
+module ReserveBot.DomainToString
 
+open ReserveBot.Types
 open System
-open ReserveResource.Types
 
 let stringArrayToString collection =
     collection |> String.concat Environment.NewLine
@@ -29,7 +29,7 @@ let resourcesToString resources =
 let resourceStateToString =
     function
     | Free resource -> sprintf "%s свободен" (resourceToString resource) 
-    | Busy (resource, booking) -> sprintf "%s занято @%s \r\nс %s по %s" (resourceToString (booking.Resource)) booking.Account.TelegramLogin (booking.From.ToString()) (booking.ExpiredIn.ToString())
+    | Busy (resource, booking) -> sprintf "%s занято @%s \r\nс %s по %s" (resourceToString (booking.Resource)) booking.Account.TelegramLogin (booking.From.ToString("dd.MM hh:mm:ss")) (booking.ExpiredIn.ToString("dd.MM hh:mm:ss"))
 
 let resourceStatesToString states =
     states
