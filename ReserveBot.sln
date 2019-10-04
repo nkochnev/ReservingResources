@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReserveBot.Storage", "Reser
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ReserveBot", "ReserveBot\ReserveBot.fsproj", "{30A72CE3-8B68-4726-8DED-684D89A22E90}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ReserveBot.DataProvider", "ReserveBot.DataProvider\ReserveBot.DataProvider.fsproj", "{4463B4B0-D91B-40FB-84DD-7952454C4883}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{30A72CE3-8B68-4726-8DED-684D89A22E90}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30A72CE3-8B68-4726-8DED-684D89A22E90}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30A72CE3-8B68-4726-8DED-684D89A22E90}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4463B4B0-D91B-40FB-84DD-7952454C4883}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4463B4B0-D91B-40FB-84DD-7952454C4883}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4463B4B0-D91B-40FB-84DD-7952454C4883}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4463B4B0-D91B-40FB-84DD-7952454C4883}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

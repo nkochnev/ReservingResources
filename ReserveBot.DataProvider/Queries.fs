@@ -1,4 +1,4 @@
-module ReserveResource.Database.Queries
+module ReserveBot.DataProvider.Queries
 
 open System
 open System.Linq

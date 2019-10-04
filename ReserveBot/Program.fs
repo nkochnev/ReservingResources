@@ -1,16 +1,16 @@
-﻿module ReserveResource.TelegramBot
+﻿module ReserveBot.TelegramBot
 
 open System.IO
 open TelegramBotInfrastructure
 open ReserveBot.Types
 open ReserveBot.DomainToString
 open ReserveBot.Logic
-open ReserveResource.Database.Database
+open ReserveBot.DataProvider.Database
 open Funogram.Bot
 open Funogram.Api
 open Funogram.Types
 open Funogram.Keyboard.Inline
-open ReserveResource.Keyboard
+open ReserveBot.Keyboard
 open ReserveBot.Storage
 open SelectFreeResourceKeyboard
 open SelectReservedResourceKeyboard

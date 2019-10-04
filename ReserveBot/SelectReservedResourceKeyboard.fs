@@ -1,4 +1,4 @@
-namespace ReserveResource.Keyboard
+namespace ReserveBot.Keyboard
 open ReserveBot
 
 module SelectReservedResourceKeyboard =

@@ -6,9 +6,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Database\Queries.fs" />
-        <Compile Include="Database\Mappers.fs" />
-        <Compile Include="Database\Database.fs" />
         <Compile Include="Infrastructure.fs" />
         <Compile Include="SelectFreeResourceKeyboard.fs" />
         <Compile Include="SelectReservedResourceKeyboard.fs" />
@@ -18,7 +15,6 @@
     <ItemGroup>
       <PackageReference Include="Funogram" Version="1.3.3" />
       <PackageReference Include="Funogram.Keyboard" Version="1.3.1" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.6" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.2.6" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="2.2.6" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.2.6" />
@@ -27,7 +23,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ReserveBot.Storage\ReserveBot.Storage.csproj" />
+      <ProjectReference Include="..\ReserveBot.DataProvider\ReserveBot.DataProvider.fsproj" />
+      <ProjectReference Include="..\ReserveBot.Domain\ReserveBot.Domain.fsproj" />
     </ItemGroup>
     
 </Project>

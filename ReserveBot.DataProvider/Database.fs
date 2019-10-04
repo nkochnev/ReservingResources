@@ -1,10 +1,14 @@
-module ReserveResource.Database.Database
+module ReserveBot.DataProvider.Database
+
+// точка входа для работы с базой данных
+// принимаем в параметрах dbContext и доменные сущности
+// возвращаем доменные сущности и никогда сущности БД
 
 open ReserveBot.Storage
 open ReserveBot.Types
 open System
-open ReserveResource.Database.Queries
-open ReserveResource.Database.Mappers
+open ReserveBot.DataProvider.Queries
+open ReserveBot.DataProvider.Mappers
 open ReserveBot.DomainToString
 open ReserveBot.Storage.Tables
 

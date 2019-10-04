@@ -1,4 +1,4 @@
-﻿module ReserveResource.Database.Mappers
+﻿module ReserveBot.DataProvider.Mappers
 
 open ReserveBot.Storage.Tables
 open ReserveBot.Types

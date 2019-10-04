@@ -1,9 +1,9 @@
-module ReserveResource.TelegramBotInfrastructure
+module ReserveBot.TelegramBotInfrastructure
 
 open System
 open Funogram.Bot
 open Funogram.Types
-open ReserveResource.Database.Database
+open ReserveBot.DataProvider.Database
 open ReserveBot.Types
 open ReserveBot.DomainToString
 

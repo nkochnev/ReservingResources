@@ -1,4 +1,4 @@
-namespace ReserveResource.Keyboard
+namespace ReserveBot.Keyboard
 
 module SelectFreeResourceKeyboard =
     open System
