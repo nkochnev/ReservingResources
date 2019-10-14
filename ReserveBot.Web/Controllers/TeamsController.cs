@@ -29,12 +29,12 @@ namespace ReserveBot.Web.Controllers
             model.Teams = teams.Select(x => new TeamViewModel() {Id = x.Id, Name = x.Name}).ToList();
             return View(model);
         }
-        
+
         public IActionResult Add()
         {
             return View();
         }
-        
+
         [HttpPost]
         public IActionResult Add(TeamViewModel model)
         {
@@ -43,7 +43,7 @@ namespace ReserveBot.Web.Controllers
             _reserveBotContext.SaveChanges();
             return RedirectToAction("Index");
         }
-        
+
         public IActionResult Delete(Guid id)
         {
             var team = _reserveBotContext.Teams.Single(x => x.Id == id);
