@@ -6,8 +6,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ReserveBot.Storage
 {
-    public class ReserveBotContext : DbContext 
+    public class ReserveBotContext : DbContext
     {
+        private readonly string _connectionString;
+        
+        public ReserveBotContext(string connectionString)
+        {
+            this._connectionString = connectionString;
+        }
+        
         public DbSet<TeamEntity> Teams { get; set; }
         public DbSet<AccountEntity> Accounts { get; set; }
         public DbSet<AccountInTeamEntity> AccountInTeams { get; set; }
@@ -17,7 +24,7 @@ namespace ReserveBot.Storage
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder
                 .UseLazyLoadingProxies()
-                .UseNpgsql("Database=ReserveBot;Password=postgres;Username=postgres;Host=localhost;ApplicationName=Booking");
+                .UseNpgsql(_connectionString);
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

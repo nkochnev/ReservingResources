@@ -25,7 +25,11 @@ namespace ReserveBot.Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
-            services.AddTransient<ReserveBotContext>();
+            services.AddTransient(provider =>
+            {
+                var connectionString = Configuration.GetConnectionString("ReserveBot");;
+                return new ReserveBotContext(connectionString);
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

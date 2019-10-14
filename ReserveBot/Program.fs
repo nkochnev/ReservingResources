@@ -1,5 +1,6 @@
 ﻿module ReserveBot.TelegramBot
 
+open System
 open System.IO
 open TelegramBotInfrastructure
 open ReserveBot.Types
@@ -46,7 +47,8 @@ let processMessageBuild config =
                 tctx.Update.Message.Value.From.Value.Id
             else tctx.Update.CallbackQuery.Value.From.Id
         
-        let dctx = new ReserveBotContext()
+        let connectionString = Environment.GetEnvironmentVariable "ReserveBot_ConnectionString"    
+        let dctx = new ReserveBotContext(connectionString)
 
         let sendMessageFormatted text parseMode =
             (sendMessageBase (ChatId.Int(userId)) text (Some parseMode) None
@@ -158,17 +160,14 @@ let start token =
 let main argv =
     printfn "Bot started..."
     
-    let dctx = new ReserveBotContext()
+    let connectionString = Environment.GetEnvironmentVariable "ReserveBot_ConnectionString"    
+    let dctx = new ReserveBotContext(connectionString)
     dctx.Database.Migrate();
     dctx.Dispose();
     
     let startBot =
-        if File.Exists(TokenFileName) then
-            start (File.ReadAllText(TokenFileName))
-        else
-            printf "Please, enter bot token: "
-            let token = System.Console.ReadLine()
-            File.WriteAllText(TokenFileName, token)
-            start token
+        let token = Environment.GetEnvironmentVariable "ReserveBot_token"
+        start token
+            
     startBot |> Async.RunSynchronously
     0 // return an integer exit code
