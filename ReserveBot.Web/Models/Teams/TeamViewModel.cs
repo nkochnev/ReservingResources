@@ -1,6 +1,6 @@
 using System;
 
-namespace ReserveBot.Web.Models
+namespace ReserveBot.Web.Models.Teams
 {
     public class TeamViewModel
     {

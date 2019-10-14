@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ReserveBot.Web.Models
+namespace ReserveBot.Web.Models.Teams
 {
     public class TeamsViewModel
     {

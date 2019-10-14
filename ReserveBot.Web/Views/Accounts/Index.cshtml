@@ -1,0 +1,34 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+@model ReserveBot.Web.Models.Accounts.AccountsViewModel
+<div class="text-center">
+    <h1 class="display-4">Аккаунты</h1>
+</div>
+
+@Html.ActionLink("Добавить", "Edit")
+
+<table class="table">
+    <tr>
+        <th>Name</th>
+        <th>TelegramLogin</th>
+        <th>В командах</th>
+        <th></th>
+    </tr>
+
+    @foreach (var account in Model.Accounts)
+    {
+        <tr>
+            <td>@Html.ActionLink(account.Name, "Edit", new {id = account.Id})</td>
+            <td>@account.TelegramLogin</td>
+            <td>
+                @foreach (var team in account.Teams)
+                {
+                    <div>@team.Name</div>
+                }
+            </td>
+            <td>@Html.ActionLink("Удалить", "Delete", new {id = account.Id})</td>
+        </tr>
+    }
+
+</table>
