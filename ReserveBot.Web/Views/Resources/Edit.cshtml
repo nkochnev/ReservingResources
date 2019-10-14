@@ -1,0 +1,33 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+@model ReserveBot.Web.Models.Resources.EditResourceViewModel
+@using (Html.BeginForm())
+{
+    <input type="hidden" asp-for="@Model.Id"/>
+    <div class="form-group">
+        @Html.LabelFor(x => x.Name, "Имя")
+        @Html.TextBoxFor(m => m.Name, null, new {@class = "form-control"})
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(x => x.SelectedResourceType, "Resource type")
+        @foreach (var resourceType in Model.ResourceTypes)
+        {
+            <div>
+                @Html.RadioButton("SelectedResourceType", resourceType.Value, new {id = resourceType.Value})
+                @Html.Label("", resourceType.Text, new {@for = resourceType.Value})
+            </div>
+        }
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(x => x.SelectedTeam, "Team")
+        @foreach (var team in Model.Teams)
+        {
+            <div>
+                @Html.RadioButton("SelectedTeam", team.Value, new {id = team.Value})
+                @Html.Label("", team.Text, new {@for = team.Value})
+            </div>
+        }
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+}

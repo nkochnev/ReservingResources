@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
-using ReserveBot.Web.Models.Teams;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ReserveBot.Web.Models.Accounts
 {
-    public class AccountViewModel
+    public class EditAccountViewModel
     {
-        public Guid Id { get; set; }
+        public Guid? Id { get; set; }
         public string Name { get; set; }
         public string TelegramLogin { get; set; }
-        public List<TeamViewModel> Teams { get; set; }
+        public List<SelectListItem> Teams { get; set; }
     }
 }

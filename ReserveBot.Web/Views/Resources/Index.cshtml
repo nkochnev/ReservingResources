@@ -1,0 +1,29 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+@model ReserveBot.Web.Models.Resources.ResourcesViewModel
+<div class="text-center">
+    <h1 class="display-4">Ресурсы</h1>
+</div>
+
+@Html.ActionLink("Добавить", "Edit")
+
+<table class="table">
+    <tr>
+        <th>Name</th>
+        <th>ResourceType</th>
+        <th>Team</th>
+        <th></th>
+    </tr>
+
+    @foreach (var resource in Model.Resources)
+    {
+        <tr>
+            <td>@Html.ActionLink(resource.Name, "Edit", new {id = resource.Id})</td>
+            <td>@resource.ResourceType</td>
+            <td>@resource.Team</td>
+            <td>@Html.ActionLink("Удалить", "Delete", new {id = resource.Id})</td>
+        </tr>
+    }
+
+</table>
